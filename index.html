@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>길드전 공격 추천</title>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+import { getDatabase, ref, onValue, update } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyACr8bD-ZrJTwXvyiQTrxacrsQshepRbB8",
+  authDomain: "sena-hwarang.firebaseapp.com",
+  projectId: "sena-hwarang",
+  storageBucket: "sena-hwarang.firebasestorage.app",
+  messagingSenderId: "374306466048",
+  appId: "1:374306466048:web:a97a7bc4c9ea886e0a6be5"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+
+let currentPath = "";
+
+// 방어팀 불러오기
+onValue(ref(db, "defenseTeams"), (snapshot) => {
+  const data = snapshot.val();
+  const select = document.getElementById("defenseSelect");
+  select.innerHTML = "";
+
+  for (let key in data) {
+    const option = document.createElement("option");
+    option.value = key;
+    option.textContent = data[key].name;
+    select.appendChild(option);
+  }
+
+  loadAttackTeams(select.value);
+});
+
+window.loadAttackTeams = function(defenseKey) {
+  const list = document.getElementById("attackList");
+  list.innerHTML = "";
+
+  onValue(ref(db, `defenseTeams/${defenseKey}/attackTeams`), (snapshot) => {
+    const data = snapshot.val();
+    for (let key in data) {
+      const btn = document.createElement("button");
+      btn.textContent = data[key].name;
+      btn.onclick = () => selectAttack(defenseKey, key);
+      list.appendChild(btn);
+    }
+  });
+};
+
+window.selectAttack = function(defenseKey, attackKey) {
+  currentPath = `defenseTeams/${defenseKey}/attackTeams/${attackKey}`;
+  onValue(ref(db, currentPath), (snapshot) => {
+    const d = snapshot.val();
+    document.getElementById("weapon").textContent = d.items.weapon;
+    document.getElementById("armor").textContent = d.items.armor;
+    document.getElementById("accessory").textContent = d.items.accessory;
+    document.getElementById("win").textContent = d.win;
+    document.getElementById("lose").textContent = d.lose;
+    const rate = d.win + d.lose === 0 ? 0 : Math.round((d.win / (d.win + d.lose)) * 100);
+    document.getElementById("rate").textContent = rate;
+  });
+};
+
+window.addWin = function() {
+  update(ref(db, currentPath), { win: Number(document.getElementById("win").textContent) + 1 });
+};
+
+window.addLose = function() {
+  update(ref(db, currentPath), { lose: Number(document.getElementById("lose").textContent) + 1 });
+};
+</script>
+
+<style>
+body { font-family: sans-serif; padding: 12px; background:#111; color:#fff }
+select, button { width:100%; padding:12px; margin-top:8px; font-size:16px }
+button { background:#333; color:white; border:none; border-radius:6px }
+.stat { margin-top:10px }
+</style>
+</head>
+
+<body>
+
+<h3>🛡 방어팀 선택</h3>
+<select id="defenseSelect" onchange="loadAttackTeams(this.value)"></select>
+
+<h3>⚔ 공격팀</h3>
+<div id="attackList"></div>
+
+<h3>🎒 아이템</h3>
+<div class="stat">무기: <span id="weapon"></span></div>
+<div class="stat">방어구: <span id="armor"></span></div>
+<div class="stat">보조: <span id="accessory"></span></div>
+
+<h3>📊 전적</h3>
+<button onclick="addWin()">승</button>
+<button onclick="addLose()">패</button>
+
+<div class="stat">승: <span id="win">0</span> / 패: <span id="lose">0</span></div>
+<div class="stat">승률: <span id="rate">0</span>%</div>
+
+</body>
+</html>
