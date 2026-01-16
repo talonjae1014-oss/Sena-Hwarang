@@ -7,11 +7,22 @@
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-import { getDatabase, ref, onValue, update } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
+import {
+  getDatabase,
+  ref,
+  onValue,
+  update,
+  push,
+  set
+} from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
 
+/* =====================
+   Firebase 설정
+===================== */
 const firebaseConfig = {
   apiKey: "AIzaSyACr8bD-ZrJTwXvyiQTrxacrsQshepRbB8",
   authDomain: "sena-hwarang.firebaseapp.com",
+  databaseURL: "https://sena-hwarang-default-rtdb.firebaseio.com",
   projectId: "sena-hwarang",
   storageBucket: "sena-hwarang.firebasestorage.app",
   messagingSenderId: "374306466048",
@@ -23,11 +34,15 @@ const db = getDatabase(app);
 
 let currentPath = "";
 
-// 방어팀 불러오기
+/* =====================
+   방어팀 불러오기
+===================== */
 onValue(ref(db, "defenseTeams"), (snapshot) => {
   const data = snapshot.val();
   const select = document.getElementById("defenseSelect");
   select.innerHTML = "";
+
+  if (!data) return;
 
   for (let key in data) {
     const option = document.createElement("option");
@@ -39,12 +54,38 @@ onValue(ref(db, "defenseTeams"), (snapshot) => {
   loadAttackTeams(select.value);
 });
 
-window.loadAttackTeams = function(defenseKey) {
+/* =====================
+   방어팀 추가
+===================== */
+window.addDefenseTeam = function () {
+  const name = document.getElementById("newDefenseName").value.trim();
+  if (!name) {
+    alert("방어팀 이름을 입력하세요");
+    return;
+  }
+
+  const newRef = push(ref(db, "defenseTeams"));
+  set(newRef, {
+    name: name,
+    attackTeams: {}
+  });
+
+  document.getElementById("newDefenseName").value = "";
+};
+
+/* =====================
+   공격팀 불러오기
+===================== */
+window.loadAttackTeams = function (defenseKey) {
   const list = document.getElementById("attackList");
   list.innerHTML = "";
 
+  if (!defenseKey) return;
+
   onValue(ref(db, `defenseTeams/${defenseKey}/attackTeams`), (snapshot) => {
     const data = snapshot.val();
+    if (!data) return;
+
     for (let key in data) {
       const btn = document.createElement("button");
       btn.textContent = data[key].name;
@@ -54,32 +95,87 @@ window.loadAttackTeams = function(defenseKey) {
   });
 };
 
-window.selectAttack = function(defenseKey, attackKey) {
+/* =====================
+   공격팀 추가
+===================== */
+window.addAttackTeam = function () {
+  const defenseKey = document.getElementById("defenseSelect").value;
+  if (!defenseKey) {
+    alert("방어팀을 먼저 선택하세요");
+    return;
+  }
+
+  const name = document.getElementById("newAttackName").value.trim();
+  const weapon = document.getElementById("newWeapon").value.trim();
+  const armor = document.getElementById("newArmor").value.trim();
+  const accessory = document.getElementById("newAccessory").value.trim();
+
+  if (!name) {
+    alert("공격팀 이름을 입력하세요");
+    return;
+  }
+
+  const newRef = push(ref(db, `defenseTeams/${defenseKey}/attackTeams`));
+  set(newRef, {
+    name: name,
+    items: {
+      weapon: weapon,
+      armor: armor,
+      accessory: accessory
+    },
+    win: 0,
+    lose: 0
+  });
+
+  document.getElementById("newAttackName").value = "";
+  document.getElementById("newWeapon").value = "";
+  document.getElementById("newArmor").value = "";
+  document.getElementById("newAccessory").value = "";
+};
+
+/* =====================
+   공격팀 선택
+===================== */
+window.selectAttack = function (defenseKey, attackKey) {
   currentPath = `defenseTeams/${defenseKey}/attackTeams/${attackKey}`;
+
   onValue(ref(db, currentPath), (snapshot) => {
     const d = snapshot.val();
-    document.getElementById("weapon").textContent = d.items.weapon;
-    document.getElementById("armor").textContent = d.items.armor;
-    document.getElementById("accessory").textContent = d.items.accessory;
+    if (!d) return;
+
+    document.getElementById("weapon").textContent = d.items.weapon || "-";
+    document.getElementById("armor").textContent = d.items.armor || "-";
+    document.getElementById("accessory").textContent = d.items.accessory || "-";
     document.getElementById("win").textContent = d.win;
     document.getElementById("lose").textContent = d.lose;
-    const rate = d.win + d.lose === 0 ? 0 : Math.round((d.win / (d.win + d.lose)) * 100);
+
+    const total = d.win + d.lose;
+    const rate = total === 0 ? 0 : Math.round((d.win / total) * 100);
     document.getElementById("rate").textContent = rate;
   });
 };
 
-window.addWin = function() {
-  update(ref(db, currentPath), { win: Number(document.getElementById("win").textContent) + 1 });
+/* =====================
+   승 / 패 처리
+===================== */
+window.addWin = function () {
+  if (!currentPath) return;
+  update(ref(db, currentPath), {
+    win: Number(document.getElementById("win").textContent) + 1
+  });
 };
 
-window.addLose = function() {
-  update(ref(db, currentPath), { lose: Number(document.getElementById("lose").textContent) + 1 });
+window.addLose = function () {
+  if (!currentPath) return;
+  update(ref(db, currentPath), {
+    lose: Number(document.getElementById("lose").textContent) + 1
+  });
 };
 </script>
 
 <style>
 body { font-family: sans-serif; padding: 12px; background:#111; color:#fff }
-select, button { width:100%; padding:12px; margin-top:8px; font-size:16px }
+select, input, button { width:100%; padding:12px; margin-top:8px; font-size:16px }
 button { background:#333; color:white; border:none; border-radius:6px }
 .stat { margin-top:10px }
 </style>
@@ -87,8 +183,19 @@ button { background:#333; color:white; border:none; border-radius:6px }
 
 <body>
 
+<h3>➕ 방어팀 추가</h3>
+<input id="newDefenseName" placeholder="방어팀 이름" />
+<button onclick="addDefenseTeam()">방어팀 추가</button>
+
 <h3>🛡 방어팀 선택</h3>
 <select id="defenseSelect" onchange="loadAttackTeams(this.value)"></select>
+
+<h3>➕ 공격팀 추가</h3>
+<input id="newAttackName" placeholder="공격팀 이름" />
+<input id="newWeapon" placeholder="무기" />
+<input id="newArmor" placeholder="방어구" />
+<input id="newAccessory" placeholder="보조 아이템" />
+<button onclick="addAttackTeam()">공격팀 추가</button>
 
 <h3>⚔ 공격팀</h3>
 <div id="attackList"></div>
