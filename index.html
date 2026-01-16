@@ -30,11 +30,10 @@ let currentAttackKey = "";
 
 /* 방어팀 불러오기 */
 onValue(ref(db, "defenseTeams"), (snap) => {
-  const sel = document.getElementById("defenseSelect");
+  const sel = defenseSelect;
   sel.innerHTML = "";
   const data = snap.val();
   if (!data) return;
-
   for (let k in data) {
     const o = document.createElement("option");
     o.value = k;
@@ -46,9 +45,8 @@ onValue(ref(db, "defenseTeams"), (snap) => {
 
 /* 방어팀 추가 */
 window.addDefenseTeam = () => {
-  const name = newDefenseName.value.trim();
-  if (!name) return alert("방어팀 이름 입력");
-  set(push(ref(db,"defenseTeams")), { name, attackTeams:{} });
+  if (!newDefenseName.value.trim()) return alert("방어팀 이름 입력");
+  set(push(ref(db,"defenseTeams")), { name:newDefenseName.value, attackTeams:{} });
   newDefenseName.value="";
 };
 
@@ -59,7 +57,6 @@ window.editDefenseTeam = () => {
   if (!name) return;
   update(ref(db,"defenseTeams/"+defenseSelect.value),{name});
 };
-
 window.deleteDefenseTeam = () => {
   if (!defenseSelect.value) return;
   if (!confirm("방어팀 삭제?")) return;
@@ -84,22 +81,18 @@ window.loadAttackTeams = (defKey) => {
 /* 공격팀 추가 */
 window.addAttackTeam = () => {
   if(!currentDefenseKey) return alert("방어팀 선택");
-  const name=newAttackName.value.trim();
-  if(!name) return alert("공격팀 이름 입력");
+  if(!newAttackName.value.trim()) return alert("공격팀 이름 입력");
 
   set(push(ref(db,`defenseTeams/${currentDefenseKey}/attackTeams`)),{
-    name,
-    type: attackType.value,
-    ring: ringRec.value,
-    armor: armorRec.value,
-    skill: skillOrder.value,
+    name:newAttackName.value,
+    type:attackType.value,
+    ring:ringRec.value,
+    armor:armorRec.value,
+    skill:skillOrder.value,
     win:0, lose:0
   });
 
-  newAttackName.value="";
-  ringRec.value="";
-  armorRec.value="";
-  skillOrder.value="";
+  clearEditMode();
 };
 
 /* 공격팀 선택 */
@@ -107,6 +100,7 @@ window.selectAttack = (dKey,aKey) => {
   currentAttackKey=aKey;
   onValue(ref(db,`defenseTeams/${dKey}/attackTeams/${aKey}`),(s)=>{
     const d=s.val(); if(!d) return;
+
     typeView.textContent=d.type;
     ringView.textContent=d.ring;
     armorView.textContent=d.armor;
@@ -114,29 +108,59 @@ window.selectAttack = (dKey,aKey) => {
     win.textContent=d.win;
     lose.textContent=d.lose;
     rate.textContent=d.win+d.lose?Math.round(d.win/(d.win+d.lose)*100):0;
+
+    // 🔥 입력칸 자동 채우기
+    newAttackName.value=d.name;
+    attackType.value=d.type;
+    ringRec.value=d.ring;
+    armorRec.value=d.armor;
+    skillOrder.value=d.skill;
+
+    setEditMode(true);
   });
 };
 
-/* 공격팀 수정 / 삭제 */
+/* 공격팀 수정 */
 window.editAttackTeam = () => {
-  if(!currentAttackKey) return;
+  if(!currentAttackKey) return alert("공격팀 선택");
+  if(!confirm("반지 장비 스순 정보가 변경됩니다\n수정하시겠습니까?")) return;
+
   update(ref(db,`defenseTeams/${currentDefenseKey}/attackTeams/${currentAttackKey}`),{
-    type: attackType.value,
-    ring: ringRec.value,
-    armor: armorRec.value,
-    skill: skillOrder.value
+    name:newAttackName.value,
+    type:attackType.value,
+    ring:ringRec.value,
+    armor:armorRec.value,
+    skill:skillOrder.value
   });
+
+  clearEditMode();
 };
 
+/* 공격팀 삭제 */
 window.deleteAttackTeam = () => {
   if(!currentAttackKey) return;
   if(!confirm("공격팀 삭제?")) return;
   remove(ref(db,`defenseTeams/${currentDefenseKey}/attackTeams/${currentAttackKey}`));
+  clearEditMode();
 };
 
 /* 승패 */
 window.addWin=()=>update(ref(db,`defenseTeams/${currentDefenseKey}/attackTeams/${currentAttackKey}`),{win:+win.textContent+1});
 window.addLose=()=>update(ref(db,`defenseTeams/${currentDefenseKey}/attackTeams/${currentAttackKey}`),{lose:+lose.textContent+1});
+
+/* 수정 모드 UI */
+function setEditMode(on){
+  editNotice.style.display = on ? "block" : "none";
+  editBtn.classList.toggle("editing", on);
+}
+function clearEditMode(){
+  currentAttackKey="";
+  newAttackName.value="";
+  ringRec.value="";
+  armorRec.value="";
+  skillOrder.value="";
+  setEditMode(false);
+}
 </script>
 
 <style>
@@ -144,6 +168,8 @@ body{background:#111;color:#fff;font-family:sans-serif;padding:12px}
 input,select,textarea,button{width:100%;margin-top:8px;padding:12px;font-size:15px}
 textarea{min-height:80px}
 button{background:#333;color:#fff;border:none;border-radius:6px}
+button.editing{background:#c0392b}
+.notice{background:#222;color:#ff7675;padding:10px;border-radius:6px;margin-top:8px;display:none}
 .stat{margin-top:8px}
 </style>
 </head>
@@ -160,6 +186,8 @@ button{background:#333;color:#fff;border:none;border-radius:6px}
 <select id="defenseSelect" onchange="loadAttackTeams(this.value)"></select>
 
 <h3>➕ 공격팀</h3>
+<div id="editNotice" class="notice">✏ 현재 공격팀 수정 중입니다</div>
+
 <input id="newAttackName" placeholder="공격팀 이름">
 <select id="attackType">
   <option value="속공">속공</option>
@@ -168,8 +196,9 @@ button{background:#333;color:#fff;border:none;border-radius:6px}
 <input id="ringRec" placeholder="반지 추천">
 <textarea id="armorRec" placeholder="방어구 추천"></textarea>
 <input id="skillOrder" placeholder="스킬 순서">
+
 <button onclick="addAttackTeam()">추가</button>
-<button onclick="editAttackTeam()">수정</button>
+<button id="editBtn" onclick="editAttackTeam()">수정</button>
 <button onclick="deleteAttackTeam()">삭제</button>
 
 <h3>⚔ 공격팀 목록</h3>
