@@ -8,7 +8,7 @@
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
 import {
-  getDatabase, ref, onValue, update, push, set, remove
+  getDatabase, ref, onValue, off, update, push, set, remove
 } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
 
 /* Firebase */
@@ -29,10 +29,11 @@ const ADMIN_PW = "1513";
 
 let currentDefenseKey = "";
 let currentAttackKey = "";
+let attackListenerRef = null;
 
-/* 비밀번호 체크 */
+/* 비밀번호 */
 function checkPW(){
-  const pw = prompt("관리자 비밀번호를 입력하세요");
+  const pw = prompt("관리자 비밀번호");
   if(pw !== ADMIN_PW){
     alert("비밀번호가 틀렸습니다");
     return false;
@@ -41,122 +42,84 @@ function checkPW(){
 }
 
 /* 방어팀 불러오기 */
-onValue(ref(db, "defenseTeams"), (snap) => {
-  defenseSelect.innerHTML = "";
-  const data = snap.val();
-  if (!data) return;
-  for (let k in data) {
-    const o = document.createElement("option");
-    o.value = k;
-    o.textContent = data[k].name;
+onValue(ref(db,"defenseTeams"), snap=>{
+  defenseSelect.innerHTML="";
+  const d=snap.val(); if(!d) return;
+  for(let k in d){
+    const o=document.createElement("option");
+    o.value=k; o.textContent=d[k].name;
     defenseSelect.appendChild(o);
   }
   loadAttackTeams(defenseSelect.value);
 });
 
-/* 방어팀 추가 */
-window.addDefenseTeam = () => {
-  if (!checkPW()) return;
-  if (!newDefenseName.value.trim()) return alert("방어팀 이름 입력");
-  set(push(ref(db,"defenseTeams")), { name:newDefenseName.value, attackTeams:{} });
-  newDefenseName.value="";
-};
-
-/* 방어팀 수정 / 삭제 */
-window.editDefenseTeam = () => {
-  if (!defenseSelect.value) return;
-  if (!checkPW()) return;
-  const name = prompt("새 방어팀 이름");
-  if (!name) return;
-  update(ref(db,"defenseTeams/"+defenseSelect.value),{name});
-};
-
-window.deleteDefenseTeam = () => {
-  if (!defenseSelect.value) return;
-  if (!checkPW()) return;
-  if (!confirm("방어팀을 삭제하시겠습니까?")) return;
-  remove(ref(db,"defenseTeams/"+defenseSelect.value));
-};
-
-/* 공격팀 불러오기 (승률순 + 🔥) */
-window.loadAttackTeams = (defKey) => {
+/* 공격팀 목록 (중복 방지) */
+window.loadAttackTeams = (defKey)=>{
   currentDefenseKey = defKey;
   attackList.innerHTML="";
 
-  onValue(ref(db,`defenseTeams/${defKey}/attackTeams`),(s)=>{
-    const data = s.val();
-    if(!data) return;
+  if(attackListenerRef){
+    off(attackListenerRef);
+  }
 
-    const teams = Object.entries(data).map(([key, v]) => {
-      const total = (v.win||0) + (v.lose||0);
-      const rate = total === 0 ? 0 : Math.round((v.win/total)*100);
-      return { key, ...v, rate };
-    });
+  attackListenerRef = ref(db,`defenseTeams/${defKey}/attackTeams`);
 
-    teams.sort((a,b)=>b.rate - a.rate);
+  onValue(attackListenerRef,snap=>{
+    attackList.innerHTML="";
+    const data=snap.val(); if(!data) return;
+
+    const teams = Object.entries(data).map(([k,v])=>{
+      const t=(v.win||0)+(v.lose||0);
+      const r=t?Math.round(v.win/t*100):0;
+      return {key:k,...v,rate:r};
+    }).sort((a,b)=>b.rate-a.rate);
 
     teams.forEach(t=>{
       const b=document.createElement("button");
-      const fire = t.rate >= 70 ? "🔥 " : "";
-      b.textContent = `${fire}${t.name} (${t.rate}%)`;
+      b.textContent=`${t.rate>=70?"🔥 ":""}${t.name} (${t.rate}%)`;
       b.onclick=()=>selectAttack(defKey,t.key);
       attackList.appendChild(b);
     });
   });
 };
 
-/* 공격팀 추가 */
-window.addAttackTeam = () => {
-  if(!checkPW()) return;
-  if(!currentDefenseKey) return alert("방어팀 선택");
-  if(!newAttackName.value.trim()) return alert("공격팀 이름 입력");
-
-  set(push(ref(db,`defenseTeams/${currentDefenseKey}/attackTeams`)),{
-    name:newAttackName.value,
-    type:attackType.value,
-    ring:ringRec.value,
-    armor:armorRec.value,
-    skill:skillOrder.value,
-    win:0,
-    lose:0
-  });
-
-  clearEditMode();
-};
-
 /* 공격팀 선택 */
-window.selectAttack = (dKey,aKey) => {
+window.selectAttack=(dKey,aKey)=>{
   currentAttackKey=aKey;
-  onValue(ref(db,`defenseTeams/${dKey}/attackTeams/${aKey}`),(s)=>{
+  onValue(ref(db,`defenseTeams/${dKey}/attackTeams/${aKey}`),s=>{
     const d=s.val(); if(!d) return;
-
-    const total = d.win + d.lose;
-    const rateVal = total ? Math.round(d.win/total*100) : 0;
-
     typeView.textContent=d.type;
     ringView.textContent=d.ring;
     armorView.textContent=d.armor;
     skillView.textContent=d.skill;
     win.textContent=d.win;
     lose.textContent=d.lose;
-    rate.textContent=rateVal;
-
-    newAttackName.value=d.name;
-    attackType.value=d.type;
-    ringRec.value=d.ring;
-    armorRec.value=d.armor;
-    skillOrder.value=d.skill;
-
-    setEditMode(true);
+    rate.textContent=d.win+d.lose?Math.round(d.win/(d.win+d.lose)*100):0;
   });
 };
 
-/* 공격팀 수정 */
-window.editAttackTeam = () => {
-  if(!currentAttackKey) return alert("공격팀 선택");
-  if(!checkPW()) return;
-  if(!confirm("반지 장비 스순 정보가 변경됩니다\n수정하시겠습니까?")) return;
+/* 승패 */
+window.addWin=()=>update(ref(db,`defenseTeams/${currentDefenseKey}/attackTeams/${currentAttackKey}`),{win:+win.textContent+1});
+window.addLose=()=>update(ref(db,`defenseTeams/${currentDefenseKey}/attackTeams/${currentAttackKey}`),{lose:+lose.textContent+1});
 
+/* 관리자 기능 */
+window.addDefenseTeam=()=>{ if(!checkPW())return; set(push(ref(db,"defenseTeams")),{name:newDefenseName.value,attackTeams:{}}); };
+window.editDefenseTeam=()=>{ if(!checkPW())return; update(ref(db,"defenseTeams/"+defenseSelect.value),{name:prompt("새 이름")}); };
+window.deleteDefenseTeam=()=>{ if(!checkPW())return; remove(ref(db,"defenseTeams/"+defenseSelect.value)); };
+
+window.addAttackTeam=()=>{
+  if(!checkPW())return;
+  set(push(ref(db,`defenseTeams/${currentDefenseKey}/attackTeams`)),{
+    name:newAttackName.value,
+    type:attackType.value,
+    ring:ringRec.value,
+    armor:armorRec.value,
+    skill:skillOrder.value,
+    win:0,lose:0
+  });
+};
+window.editAttackTeam=()=>{
+  if(!checkPW())return;
   update(ref(db,`defenseTeams/${currentDefenseKey}/attackTeams/${currentAttackKey}`),{
     name:newAttackName.value,
     type:attackType.value,
@@ -164,117 +127,62 @@ window.editAttackTeam = () => {
     armor:armorRec.value,
     skill:skillOrder.value
   });
-
-  clearEditMode();
 };
-
-/* 공격팀 삭제 */
-window.deleteAttackTeam = () => {
-  if(!currentAttackKey) return;
-  if(!checkPW()) return;
-  if(!confirm("공격팀을 삭제하시겠습니까?")) return;
+window.deleteAttackTeam=()=>{
+  if(!checkPW())return;
   remove(ref(db,`defenseTeams/${currentDefenseKey}/attackTeams/${currentAttackKey}`));
-  clearEditMode();
 };
-
-/* 승패 */
-window.addWin = () => {
-  if(!currentAttackKey) return;
-  update(ref(db,`defenseTeams/${currentDefenseKey}/attackTeams/${currentAttackKey}`),{
-    win:+win.textContent+1
-  });
-};
-window.addLose = () => {
-  if(!currentAttackKey) return;
-  update(ref(db,`defenseTeams/${currentDefenseKey}/attackTeams/${currentAttackKey}`),{
-    lose:+lose.textContent+1
-  });
-};
-
-/* ✅ 승/패 초기화 */
-window.resetRecord = () => {
-  if(!currentAttackKey) return alert("공격팀 선택");
-  if(!checkPW()) return;
-  if(!confirm("해당 공격팀의 승/패를 초기화하시겠습니까?")) return;
-
-  update(ref(db,`defenseTeams/${currentDefenseKey}/attackTeams/${currentAttackKey}`),{
-    win:0,
-    lose:0
-  });
-};
-
-/* 수정 모드 UI */
-function setEditMode(on){
-  editNotice.style.display = on ? "block" : "none";
-  editBtn.classList.toggle("editing", on);
-}
-function clearEditMode(){
-  currentAttackKey="";
-  newAttackName.value="";
-  ringRec.value="";
-  armorRec.value="";
-  skillOrder.value="";
-  setEditMode(false);
-}
 </script>
 
 <style>
 body{background:#111;color:#fff;font-family:sans-serif;padding:12px}
-input,select,textarea,button{width:100%;margin-top:8px;padding:12px;font-size:15px}
-textarea{min-height:80px}
-button{background:#333;color:#fff;border:none;border-radius:6px}
-button.editing{background:#c0392b}
-.notice{background:#222;color:#ff7675;padding:10px;border-radius:6px;margin-top:8px;display:none}
-.stat{margin-top:8px}
+button,input,select,textarea{width:100%;margin-top:8px;padding:12px}
 .winBtn{background:#4aa3ff}
 .loseBtn{background:#ff5c5c}
-.resetBtn{background:#555}
+.admin{background:#2b2b00;border:2px solid #f1c40f;padding:12px;margin-top:20px}
+.admin h3{color:#f1c40f}
 </style>
 </head>
 
 <body>
 
-<h3>➕ 방어팀</h3>
-<input id="newDefenseName" placeholder="방어팀 이름">
-<button onclick="addDefenseTeam()">추가</button>
-<button onclick="editDefenseTeam()">수정</button>
-<button onclick="deleteDefenseTeam()">삭제</button>
-
-<h3>🛡 방어팀 선택</h3>
+<h3>🎯 공격할 대상 선택</h3>
 <select id="defenseSelect" onchange="loadAttackTeams(this.value)"></select>
 
-<h3>➕ 공격팀</h3>
-<div id="editNotice" class="notice">✏ 현재 공격팀 수정 중입니다</div>
-
-<input id="newAttackName" placeholder="공격팀 이름">
-<select id="attackType">
-  <option value="속공">속공</option>
-  <option value="내실">내실</option>
-</select>
-<input id="ringRec" placeholder="반지 추천">
-<textarea id="armorRec" placeholder="방어구 추천"></textarea>
-<input id="skillOrder" placeholder="스킬 순서">
-
-<button onclick="addAttackTeam()">추가</button>
-<button id="editBtn" onclick="editAttackTeam()">수정</button>
-<button onclick="deleteAttackTeam()">삭제</button>
-
-<h3>⚔ 공격팀 목록 (승률순)</h3>
+<h3>⚔ 공격팀 목록</h3>
 <div id="attackList"></div>
 
 <h3>📦 세팅</h3>
-<div class="stat">타입: <span id="typeView"></span></div>
-<div class="stat">반지: <span id="ringView"></span></div>
-<div class="stat">방어구: <span id="armorView"></span></div>
-<div class="stat">스킬 순서: <span id="skillView"></span></div>
+<div>타입 <span id="typeView"></span></div>
+<div>반지 <span id="ringView"></span></div>
+<div>방어구 <span id="armorView"></span></div>
+<div>스킬 <span id="skillView"></span></div>
 
 <h3>📊 전적</h3>
 <button class="winBtn" onclick="addWin()">승</button>
 <button class="loseBtn" onclick="addLose()">패</button>
-<button class="resetBtn" onclick="resetRecord()">승/패 초기화</button>
+<div>승 <span id="win">0</span> / 패 <span id="lose">0</span> / 승률 <span id="rate">0</span>%</div>
 
-<div class="stat">승 <span id="win">0</span> / 패 <span id="lose">0</span></div>
-<div class="stat">승률 <span id="rate">0</span>%</div>
+<div class="admin">
+<h3>🛠 관리자용</h3>
+
+<input id="newDefenseName" placeholder="방어팀 이름">
+<button onclick="addDefenseTeam()">방어팀 추가</button>
+<button onclick="editDefenseTeam()">방어팀 수정</button>
+<button onclick="deleteDefenseTeam()">방어팀 삭제</button>
+
+<hr>
+
+<input id="newAttackName" placeholder="공격팀 이름">
+<select id="attackType"><option>속공</option><option>내실</option></select>
+<input id="ringRec" placeholder="반지 추천">
+<textarea id="armorRec" placeholder="방어구 추천"></textarea>
+<input id="skillOrder" placeholder="스킬 순서">
+
+<button onclick="addAttackTeam()">공격팀 추가</button>
+<button onclick="editAttackTeam()">공격팀 수정</button>
+<button onclick="deleteAttackTeam()">공격팀 삭제</button>
+</div>
 
 </body>
 </html>
