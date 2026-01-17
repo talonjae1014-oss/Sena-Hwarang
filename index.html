@@ -9,6 +9,72 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
 import { getDatabase, ref, onValue, update, push, set, get, remove } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
 
+ /* 관리자용 닉네임 목록 불러오기 */
+onValue(ref(db, "logs"), snap => {
+  const sel = document.getElementById("adminNickSelect");
+  if (!sel) return;
+
+  sel.innerHTML = "";
+  if (!snap.exists()) return;
+
+  const nicks = [...new Set(
+    Object.values(snap.val()).map(v => v.nick)
+  )];
+
+  nicks.forEach(n => {
+    const o = document.createElement("option");
+    o.value = n;
+    o.textContent = n;
+    sel.appendChild(o);
+  });
+});
+
+/* 관리자 개인 로그 보정 */
+window.adminAdjustLog = async (type, delta) => {
+  if (!checkPW()) return;
+
+  const sel = document.getElementById("adminNickSelect");
+  if (!sel || !sel.value) {
+    alert("닉네임 선택");
+    return;
+  }
+
+  const nick = sel.value;
+
+  if (!confirm(`${nick} 닉네임 ${type} ${delta > 0 ? "+1" : "-1"} 하시겠습니까?`)) return;
+
+  // 로그 보정 기록 추가
+  set(push(ref(db, "logs")), {
+    nick,
+    result: delta > 0 ? type : `${type}_cancel`,
+    date: new Date().toISOString().slice(0,10),
+    time: Date.now(),
+    admin: true
+  });
+
+  alert("개인 승/패 로그 수정 완료");
+}; 
+  <!-- 개인 승패 로그 관리자 수정 -->
+<div style="margin-top:15px;border-top:1px dashed #666;padding-top:10px">
+  <h4>👤 개인 승/패 로그 수정 (관리자)</h4>
+
+  <select id="adminNickSelect"></select>
+
+  <div style="display:flex;gap:6px;margin-top:8px">
+    <button onclick="adminAdjustLog('win',1)">승 +1</button>
+    <button onclick="adminAdjustLog('win',-1)">승 -1</button>
+  </div>
+
+  <div style="display:flex;gap:6px;margin-top:6px">
+    <button onclick="adminAdjustLog('lose',1)">패 +1</button>
+    <button onclick="adminAdjustLog('lose',-1)">패 -1</button>
+  </div>
+
+  <div style="font-size:12px;color:#aaa;margin-top:6px">
+    ※ 공격팀/방어팀 전적에는 영향 없음<br>
+    ※ 개인 승률 통계·랭킹용 로그만 보정
+  </div>
+</div>
 /* Firebase */
 const firebaseConfig = {
   apiKey: "AIzaSyACr8bD-ZrJTwXvyiQTrxacrsQshepRbB8",
