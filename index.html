@@ -3,12 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>화랑 길드전 사이트</title>
+<title>🔥 화랑 길드전 사이트</title>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-import { getDatabase, ref, onValue, update, push } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
+import { getDatabase, ref, onValue, update, push, set, get } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
 
+/* Firebase */
 const firebaseConfig = {
   apiKey: "AIzaSyACr8bD-ZrJTwXvyiQTrxacrsQshepRbB8",
   authDomain: "sena-hwarang.firebaseapp.com",
@@ -21,244 +22,253 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
-
 const ADMIN_PW = "1513";
 
-let currentUser = "";
-let currentDefenseKey = "";
-let currentAttackKey = "";
-let currentDefenseName = "";
-let currentAttackName = "";
-let adminOpened = false;
+let myNickname="";
+let currentDefenseKey="";
+let currentAttackKey="";
+let adminOpened=false;
 
-/* 로그인 */
-window.enterSite = () => {
-  const n = nicknameInput.value.trim();
-  if (!n) return alert("닉네임을 입력하세요");
-  currentUser = n;
-  localStorage.setItem("guildUser", n);
-  loginScreen.style.display = "none";
-  mainUI.style.display = "block";
-};
-
-window.onload = () => {
-  const saved = localStorage.getItem("guildUser");
-  if (saved) {
-    currentUser = saved;
-    loginScreen.style.display = "none";
-    mainUI.style.display = "block";
+/* 닉네임 */
+window.onload=()=>{
+  myNickname = localStorage.getItem("nickname");
+  if(!myNickname){
+    const n = prompt("닉네임을 입력하세요");
+    if(!n){ alert("닉네임 필수"); location.reload(); return; }
+    myNickname = n.trim();
+    localStorage.setItem("nickname", myNickname);
   }
 };
 
-/* 관리자 */
-function checkPW() {
-  const pw = prompt("관리자 비밀번호");
-  if (pw !== ADMIN_PW) {
-    alert("비밀번호가 틀렸습니다");
-    return false;
-  }
+/* 관리자 비밀번호 */
+function checkPW(){
+  const pw = prompt("관리자 비밀번호 입력");
+  if(pw !== ADMIN_PW){ alert("비밀번호 오류"); return false; }
   return true;
 }
 
-window.toggleAdmin = () => {
-  if (!adminOpened) {
-    if (!checkPW()) return;
-    adminOpened = true;
-    adminPanel.style.display = "block";
-    adminToggleBtn.textContent = "− 관리자 닫기";
-    loadLogs();
-  } else {
-    adminOpened = false;
-    adminPanel.style.display = "none";
-    adminToggleBtn.textContent = "+ 관리자용";
+/* 관리자 토글 */
+window.toggleAdmin = ()=>{
+  if(!adminOpened){
+    if(!checkPW()) return;
+    adminPanel.style.display="block";
+    adminToggleBtn.textContent="− 관리자용 닫기";
+    adminOpened=true;
+  }else{
+    adminPanel.style.display="none";
+    adminToggleBtn.textContent="+ 관리자용";
+    adminOpened=false;
   }
 };
 
-/* 방어팀 */
-onValue(ref(db, "defenseTeams"), snap => {
-  defenseSelect.innerHTML = "";
-  const d = snap.val();
-  if (!d) return;
+/* 하루 입력 제한 */
+async function canInputToday(){
+  const today = new Date().toISOString().slice(0,10);
+  const snap = await get(ref(db,"logs"));
+  let cnt=0;
+  if(snap.exists()){
+    Object.values(snap.val()).forEach(v=>{
+      if(v.nickname===myNickname && v.date===today) cnt++;
+    });
+  }
+  return cnt < 5;
+}
 
-  Object.entries(d).forEach(([k, v]) => {
-    const o = document.createElement("option");
-    o.value = k;
-    o.textContent = v.name;
+/* 로그 */
+function writeLog(nick,result){
+  set(push(ref(db,"logs")),{
+    nickname:nick,
+    result,
+    date:new Date().toISOString().slice(0,10),
+    time:Date.now()
+  });
+}
+
+/* 방어팀 */
+onValue(ref(db,"defenseTeams"), snap=>{
+  defenseSelect.innerHTML="";
+  const d=snap.val(); if(!d) return;
+
+  Object.entries(d).forEach(([k,v])=>{
+    let w=0,l=0;
+    if(v.attackTeams){
+      Object.values(v.attackTeams).forEach(t=>{
+        w+=t.win||0; l+=t.lose||0;
+      });
+    }
+    const total=w+l;
+    const rate=total?Math.round(w/total*100):0;
+
+    const o=document.createElement("option");
+    o.value=k;
+    o.textContent=`${v.name} (${rate}% · ${w}승 ${l}패)`;
     defenseSelect.appendChild(o);
   });
 
   loadAttackTeams(defenseSelect.value);
 });
 
-/* 공격팀 목록 */
-window.loadAttackTeams = (defKey) => {
-  currentDefenseKey = defKey;
+/* 공격팀 */
+window.loadAttackTeams=(k)=>{
+  currentDefenseKey=k;
+  attackList.innerHTML="";
+  if(!k) return;
 
-  onValue(ref(db, `defenseTeams/${defKey}`), snap => {
-    const def = snap.val();
-    if (!def) return;
+  onValue(ref(db,`defenseTeams/${k}/attackTeams`), snap=>{
+    attackList.innerHTML="";
+    const d=snap.val(); if(!d) return;
 
-    currentDefenseName = def.name;
-    attackList.innerHTML = "";
+    const teams=Object.entries(d).map(([ak,av])=>{
+      const t=(av.win||0)+(av.lose||0);
+      const r=t?Math.round(av.win/t*100):0;
+      return {key:ak,...av,r};
+    }).sort((a,b)=>b.r-a.r);
 
-    const teams = Object.entries(def.attackTeams || {}).map(([k, v]) => {
-      const total = (v.win || 0) + (v.lose || 0);
-      const rate = total ? Math.round(v.win / total * 100) : 0;
-      return { key: k, ...v, rate };
-    }).sort((a, b) => b.rate - a.rate);
-
-    teams.forEach(t => {
-      const btn = document.createElement("button");
-      btn.textContent = `${t.rate >= 70 ? "🔥 " : ""}${t.name} (${t.rate}%)`;
-      btn.onclick = () => selectAttack(defKey, t.key);
-      attackList.appendChild(btn);
+    teams.forEach(t=>{
+      const b=document.createElement("button");
+      b.textContent=`${t.r>=70?"🔥 ":""}${t.name} ${t.r}% (${t.win}승 ${t.lose}패)`;
+      b.onclick=()=>selectAttack(k,t.key);
+      attackList.appendChild(b);
     });
   });
 };
 
 /* 공격팀 선택 */
-window.selectAttack = (dKey, aKey) => {
-  currentAttackKey = aKey;
+window.selectAttack=(dk,ak)=>{
+  currentAttackKey=ak;
+  onValue(ref(db,`defenseTeams/${dk}/attackTeams/${ak}`), snap=>{
+    const d=snap.val(); if(!d) return;
+    win.textContent=d.win;
+    lose.textContent=d.lose;
+    const t=d.win+d.lose;
+    rate.textContent=t?Math.round(d.win/t*100):0;
 
-  onValue(ref(db, `defenseTeams/${dKey}/attackTeams/${aKey}`), snap => {
-    const d = snap.val();
-    if (!d) return;
-
-    currentAttackName = d.name;
-
-    typeView.textContent = d.type || "-";
-    ringView.textContent = d.ring || "-";
-    armorView.textContent = d.armor || "-";
-    skillView.textContent = d.skill || "-";
-
-    win.textContent = d.win || 0;
-    lose.textContent = d.lose || 0;
-
-    const total = (d.win || 0) + (d.lose || 0);
-    rate.textContent = total ? Math.round(d.win / total * 100) : 0;
+    typeView.textContent=d.type;
+    ringView.textContent=d.ring;
+    armorView.textContent=d.armor;
+    skillView.textContent=d.skill;
   });
 };
 
-/* 로그 */
-function saveLog(result) {
-  push(ref(db, "logs"), {
-    user: currentUser,
-    defense: currentDefenseName,
-    attack: currentAttackName,
-    result,
-    time: Date.now()
+/* 승/패 */
+window.addWin=async()=>{
+  if(!currentAttackKey) return;
+  if(!await canInputToday()){ alert("하루 최대 5회"); return; }
+  update(ref(db,`defenseTeams/${currentDefenseKey}/attackTeams/${currentAttackKey}`),{
+    win:+win.textContent+1
   });
-}
-
-/* 승 / 패 */
-window.addWin = () => {
-  if (!currentAttackKey) return;
-  if (!confirm("승리하셨나요?\n장난으로 누르면 길마가 매우 화납니다.")) return;
-  update(ref(db, `defenseTeams/${currentDefenseKey}/attackTeams/${currentAttackKey}`), {
-    win: +win.textContent + 1
+  writeLog(myNickname,"win");
+};
+window.addLose=async()=>{
+  if(!currentAttackKey) return;
+  if(!await canInputToday()){ alert("하루 최대 5회"); return; }
+  update(ref(db,`defenseTeams/${currentDefenseKey}/attackTeams/${currentAttackKey}`),{
+    lose:+lose.textContent+1
   });
-  saveLog("WIN");
+  writeLog(myNickname,"lose");
 };
 
-window.addLose = () => {
-  if (!currentAttackKey) return;
-  if (!confirm("패배하셨나요?\n장난으로 누르면 길마가 매우 화납니다.")) return;
-  update(ref(db, `defenseTeams/${currentDefenseKey}/attackTeams/${currentAttackKey}`), {
-    lose: +lose.textContent + 1
+/* 승패 초기화 */
+window.resetRecord=()=>{
+  if(!currentAttackKey) return;
+  if(!checkPW()) return;
+  if(!confirm("승/패를 모두 초기화합니다.")) return;
+
+  update(ref(db,`defenseTeams/${currentDefenseKey}/attackTeams/${currentAttackKey}`),{
+    win:0, lose:0
   });
-  saveLog("LOSE");
+  writeLog("ADMIN","admin_reset");
 };
 
-/* 로그 + 사람별 통계 */
-function loadLogs() {
-  onValue(ref(db, "logs"), snap => {
-    logList.innerHTML = "";
-    statList.innerHTML = "";
+/* 관리자 수동 수정 (+1 / -1) */
+window.adminAdjust=(type,delta)=>{
+  if(!currentAttackKey) return;
+  if(!checkPW()) return;
 
-    const data = snap.val();
-    if (!data) return;
+  const path=`defenseTeams/${currentDefenseKey}/attackTeams/${currentAttackKey}`;
+  get(ref(db,path)).then(snap=>{
+    const d=snap.val(); if(!d) return;
+    const newVal=Math.max(0,(d[type]||0)+delta);
 
-    const stats = {};
-
-    Object.values(data).reverse().forEach(l => {
-      const div = document.createElement("div");
-      div.textContent =
-        `[${new Date(l.time).toLocaleString()}] ${l.user} | ${l.defense} → ${l.attack} | ${l.result}`;
-      logList.appendChild(div);
-
-      if (!stats[l.user]) stats[l.user] = { win: 0, lose: 0 };
-      l.result === "WIN" ? stats[l.user].win++ : stats[l.user].lose++;
-    });
-
-    Object.entries(stats).forEach(([u, s]) => {
-      const total = s.win + s.lose;
-      const rate = total ? Math.round(s.win / total * 100) : 0;
-      const div = document.createElement("div");
-      div.textContent = `${u} | 승 ${s.win} / 패 ${s.lose} | ${rate}%`;
-      statList.appendChild(div);
-    });
+    update(ref(db,path),{ [type]:newVal });
+    writeLog("ADMIN",`admin_${type}_${delta>0?"plus":"minus"}`);
   });
-}
+};
+
+/* 개인 랭킹 */
+onValue(ref(db,"logs"), snap=>{
+  if(!snap.exists()) return;
+  const s={};
+  Object.values(snap.val()).forEach(v=>{
+    if(v.result!=="win" && v.result!=="lose") return;
+    if(!s[v.nickname]) s[v.nickname]={w:0,l:0};
+    v.result==="win"?s[v.nickname].w++:s[v.nickname].l++;
+  });
+  const r=Object.entries(s).map(([n,v])=>{
+    const t=v.w+v.l;
+    return {n,w:v.w,l:v.l,r:t?Math.round(v.w/t*100):0};
+  }).sort((a,b)=>b.r-a.r).slice(0,3);
+
+  const medal=["🥇","🥈","🥉"];
+  rankBox.innerHTML="";
+  r.forEach((x,i)=>{
+    const d=document.createElement("div");
+    d.textContent=`${medal[i]} ${x.n} ${x.r}% (${x.w}승 ${x.l}패)`;
+    rankBox.appendChild(d);
+  });
+});
 </script>
 
 <style>
 body{background:#111;color:#fff;font-family:sans-serif;padding:12px}
-button,input,select{width:100%;margin-top:8px;padding:12px}
-button{background:#333;color:#fff;border:none;border-radius:6px}
+button,select{width:100%;margin-top:8px;padding:12px}
 .winBtn{background:#4aa3ff}
 .loseBtn{background:#ff5c5c}
+.resetBtn{font-size:12px;background:none;color:#aaa;border:none;text-decoration:underline}
 .adminToggle{background:#f1c40f;color:#000;font-weight:bold}
-
-.login-screen{
-  position:fixed; inset:0;
-  background:linear-gradient(rgba(0,0,0,.7),rgba(0,0,0,.9));
-  display:flex;align-items:center;justify-content:center;
-}
-.login-box{background:#000c;padding:30px;border-radius:14px;text-align:center}
-
-.admin{display:none;margin-top:20px;border-top:2px solid #444;padding-top:15px}
-.logBox{max-height:200px;overflow:auto;border:1px solid #444;padding:8px}
+.admin{display:none;border-top:2px solid #444;margin-top:20px;padding-top:15px}
+.rank{margin:15px 0;padding:10px;background:#000}
+.setting{margin-top:10px;padding:10px;background:#000}
+.footer{margin-top:30px;border:1px solid #555;padding:10px;text-align:center}
 </style>
 </head>
 
 <body>
 
-<div id="loginScreen" class="login-screen">
-  <div class="login-box">
-    <h1>🔥 화랑 길드전 사이트</h1>
-    <input id="nicknameInput" placeholder="닉네임 입력">
-    <button onclick="enterSite()">입장하기</button>
-  </div>
-</div>
+<h2>🔥 화랑 길드전 사이트</h2>
 
-<div id="mainUI" style="display:none">
-
-<h3>🎯 공격할 대상</h3>
 <select id="defenseSelect" onchange="loadAttackTeams(this.value)"></select>
-
-<h3>⚔ 공격팀 목록</h3>
 <div id="attackList"></div>
 
-<h3>📦 세팅</h3>
-<div>타입 : <span id="typeView"></span></div>
-<div>반지 : <span id="ringView"></span></div>
-<div>방어구 : <span id="armorView"></span></div>
-<div>스킬 순서 : <span id="skillView"></span></div>
+<div class="setting">
+  <div>타입: <span id="typeView"></span></div>
+  <div>반지: <span id="ringView"></span></div>
+  <div>방어구: <span id="armorView"></span></div>
+  <div>스킬 순서: <span id="skillView"></span></div>
+</div>
 
 <h3>📊 전적</h3>
 <button class="winBtn" onclick="addWin()">승</button>
 <button class="loseBtn" onclick="addLose()">패</button>
 <div>승 <span id="win">0</span> / 패 <span id="lose">0</span> / 승률 <span id="rate">0</span>%</div>
+<button class="resetBtn" onclick="resetRecord()">승패 초기화 (관리자용)</button>
+
+<div class="rank">
+  <h3>🏆 개인 승률 TOP3</h3>
+  <div id="rankBox"></div>
+</div>
 
 <button id="adminToggleBtn" class="adminToggle" onclick="toggleAdmin()">+ 관리자용</button>
 
 <div id="adminPanel" class="admin">
-  <h3>📜 로그</h3>
-  <div id="logList" class="logBox"></div>
-  <h3>📊 사람별 승률</h3>
-  <div id="statList" class="logBox"></div>
+  <h3>🛠 관리자 수동 수정</h3>
+  <button onclick="adminAdjust('win',1)">승 +1</button>
+  <button onclick="adminAdjust('win',-1)">승 -1</button>
+  <button onclick="adminAdjust('lose',1)">패 +1</button>
+  <button onclick="adminAdjust('lose',-1)">패 -1</button>
 </div>
 
-</div>
+<div class="footer">제작자 : 불멸</div>
+
 </body>
 </html>
