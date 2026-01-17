@@ -206,15 +206,19 @@ window.delAttack = ()=>{ if(checkPW()) remove(ref(db,`defenseTeams/${currentDefe
 onValue(ref(db,"logs"),snap=>{
   const s={};
   if(!snap.exists()) return;
-  Object.values(snap.val()).forEach(v=>{
-    if(!s[v.nick]) s[v.nick]={w:0,l:0};
-    if(v.type === "win"){
-  s[v.nick].w += v.delta;
-}
-if(v.type === "lose"){
-  s[v.nick].l += v.delta;
-}
-  });
+
+Object.values(snap.val()).forEach(v=>{
+  if(!s[v.nick]) s[v.nick]={w:0,l:0};
+
+  /* 길드원 버튼 로그 */
+  if(v.result === "win") s[v.nick].w += 1;
+  if(v.result === "lose") s[v.nick].l += 1;
+
+  /* 관리자 수동 로그 */
+  if(v.type === "win") s[v.nick].w += v.delta;
+  if(v.type === "lose") s[v.nick].l += v.delta;
+});
+
   const r=Object.entries(s).map(([n,v])=>{
     const t=v.w+v.l;
     return {n,w:v.w,l:v.l,r:t?Math.round(v.w/t*100):0};
