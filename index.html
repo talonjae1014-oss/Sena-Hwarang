@@ -208,7 +208,12 @@ onValue(ref(db,"logs"),snap=>{
   if(!snap.exists()) return;
   Object.values(snap.val()).forEach(v=>{
     if(!s[v.nick]) s[v.nick]={w:0,l:0};
-    v.result==="win"?s[v.nick].w++:s[v.nick].l++;
+    if(v.type === "win"){
+  s[v.nick].w += v.delta;
+}
+if(v.type === "lose"){
+  s[v.nick].l += v.delta;
+}
   });
   const r=Object.entries(s).map(([n,v])=>{
     const t=v.w+v.l;
@@ -249,14 +254,16 @@ window.adminLogAdjust = (type, delta) => {
 
   set(push(ref(db,"logs")),{
     nick: sel.value,
-    result: delta>0 ? type : `${type}_cancel`,
+    type: type,     // win / lose
+    delta: delta,   // +1 / -1
     date: new Date().toISOString().slice(0,10),
     time: Date.now(),
-    admin:true
+    admin: true
   });
 
   alert("닉네임 로그 수정 완료");
 };
+
 
 </script>
 
