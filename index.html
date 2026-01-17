@@ -9,72 +9,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
 import { getDatabase, ref, onValue, update, push, set, get, remove } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
 
- /* 관리자용 닉네임 목록 불러오기 */
-onValue(ref(db, "logs"), snap => {
-  const sel = document.getElementById("adminNickSelect");
-  if (!sel) return;
-
-  sel.innerHTML = "";
-  if (!snap.exists()) return;
-
-  const nicks = [...new Set(
-    Object.values(snap.val()).map(v => v.nick)
-  )];
-
-  nicks.forEach(n => {
-    const o = document.createElement("option");
-    o.value = n;
-    o.textContent = n;
-    sel.appendChild(o);
-  });
-});
-
-/* 관리자 개인 로그 보정 */
-window.adminAdjustLog = async (type, delta) => {
-  if (!checkPW()) return;
-
-  const sel = document.getElementById("adminNickSelect");
-  if (!sel || !sel.value) {
-    alert("닉네임 선택");
-    return;
-  }
-
-  const nick = sel.value;
-
-  if (!confirm(`${nick} 닉네임 ${type} ${delta > 0 ? "+1" : "-1"} 하시겠습니까?`)) return;
-
-  // 로그 보정 기록 추가
-  set(push(ref(db, "logs")), {
-    nick,
-    result: delta > 0 ? type : `${type}_cancel`,
-    date: new Date().toISOString().slice(0,10),
-    time: Date.now(),
-    admin: true
-  });
-
-  alert("개인 승/패 로그 수정 완료");
-}; 
-  <!-- 개인 승패 로그 관리자 수정 -->
-<div style="margin-top:15px;border-top:1px dashed #666;padding-top:10px">
-  <h4>👤 개인 승/패 로그 수정 (관리자)</h4>
-
-  <select id="adminNickSelect"></select>
-
-  <div style="display:flex;gap:6px;margin-top:8px">
-    <button onclick="adminAdjustLog('win',1)">승 +1</button>
-    <button onclick="adminAdjustLog('win',-1)">승 -1</button>
-  </div>
-
-  <div style="display:flex;gap:6px;margin-top:6px">
-    <button onclick="adminAdjustLog('lose',1)">패 +1</button>
-    <button onclick="adminAdjustLog('lose',-1)">패 -1</button>
-  </div>
-
-  <div style="font-size:12px;color:#aaa;margin-top:6px">
-    ※ 공격팀/방어팀 전적에는 영향 없음<br>
-    ※ 개인 승률 통계·랭킹용 로그만 보정
-  </div>
-</div>
 /* Firebase */
 const firebaseConfig = {
   apiKey: "AIzaSyACr8bD-ZrJTwXvyiQTrxacrsQshepRbB8",
@@ -111,6 +45,7 @@ window.enterSite = () => {
   localStorage.setItem("nickname", myNick);
   loginScreen.style.display = "none";
   mainScreen.style.display = "block";
+document.getElementById("currentNick").textContent = `현재 닉네임 : ${myNick}`; 
 };
 
 /* 관리자 비번 */
@@ -286,6 +221,43 @@ onValue(ref(db,"logs"),snap=>{
     }
   });
 });
+
+onValue(ref(db,"logs"), snap=>{
+  const sel = document.getElementById("adminNickSelect");
+  if(!sel || !snap.exists()) return;
+
+  sel.innerHTML = "";
+  const nicks = [...new Set(
+    Object.values(snap.val()).map(v=>v.nick)
+  )];
+
+  nicks.forEach(n=>{
+    const o=document.createElement("option");
+    o.value=n;
+    o.textContent=n;
+    sel.appendChild(o);
+  });
+});
+
+window.adminLogAdjust = (type, delta) => {
+  if(!checkPW()) return;
+
+  const sel = document.getElementById("adminNickSelect");
+  if(!sel || !sel.value) return alert("닉네임 선택");
+
+  if(!confirm(`${sel.value} ${type} ${delta>0?"+1":"-1"} 하시겠습니까?`)) return;
+
+  set(push(ref(db,"logs")),{
+    nick: sel.value,
+    result: delta>0 ? type : `${type}_cancel`,
+    date: new Date().toISOString().slice(0,10),
+    time: Date.now(),
+    admin:true
+  });
+
+  alert("닉네임 로그 수정 완료");
+};
+
 </script>
 
 <style>
@@ -310,6 +282,15 @@ button,input,select,textarea{width:100%;margin-top:8px;padding:12px}
 </div>
 
 <div id="mainScreen">
+
+<div id="currentNick" style="
+position:fixed;
+top:10px;
+right:12px;
+font-size:13px;
+color:#f1c40f;
+">
+</div>
 
 <h3>🎯 공격할 대상 선택</h3>
 <select id="defenseSelect" onchange="loadAttackTeams(this.value)"></select>
@@ -348,6 +329,18 @@ button,input,select,textarea{width:100%;margin-top:8px;padding:12px}
 <button onclick="editAttack()">공격팀 수정</button>
 <button onclick="delAttack()">공격팀 삭제</button>
 </div>
+
+<hr style="margin:15px 0;border-color:#333">
+
+<h4>📌 닉네임별 승/패 로그 수정</h4>
+
+<select id="adminNickSelect"></select>
+
+<button onclick="adminLogAdjust('win',1)">승 +1</button>
+<button onclick="adminLogAdjust('win',-1)">승 -1</button>
+
+<button onclick="adminLogAdjust('lose',1)">패 +1</button>
+<button onclick="adminLogAdjust('lose',-1)">패 -1</button>
 
 <div class="footer">제작자 : 불멸</div>
 
