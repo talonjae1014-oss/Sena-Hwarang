@@ -339,6 +339,23 @@ onValue(ref(db, "logs"), async (snap) => {
   profileWin.textContent = win;
   profileLose.textContent = lose;
   profileRate.textContent = rate;
+
+  /* 🔥 내 최근 5판 */
+  const recent = Object.values(snap.val())
+    .filter(v => v.nick === myNick && (v.result === "win" || v.result === "lose"))
+    .sort((a,b)=>b.time - a.time)
+    .slice(0,5);
+
+  let recentHtml = "";
+  recent.forEach(v=>{
+    if(v.result === "win") recentHtml += "🟢 ";
+    if(v.result === "lose") recentHtml += "🔴 ";
+  });
+
+  const recentEl = document.getElementById("myRecent");
+  if(recentEl){
+    recentEl.innerHTML = "최근 5판 : " + (recentHtml || "-");
+  }
 });
 
 /* 선호 공격팀 TOP3 */
@@ -439,6 +456,33 @@ button,input,select,textarea{width:100%;margin-top:8px;padding:12px}
   100% {
     box-shadow: 0 0 4px rgba(241,196,15,0.4);
   }
+}
+
+/* 👤 내 전적 카드 초소형 버전 */
+#myCard {
+  padding: 6px !important;
+  font-size: 12px;
+  line-height: 1.35;
+  border-width: 2px;
+  max-width: 210px;
+}
+
+/* 제목 */
+#myCard h4 {
+  margin: 0 0 4px 0;
+  font-size: 13px;
+}
+
+/* 각 줄 간격 최소화 */
+#myCard div {
+  margin-bottom: 3px;
+}
+
+/* 최근 전적 */
+#myRecent {
+  margin-top: 4px;
+  font-size: 12px;
+  letter-spacing: 1px;
 }
 
 </style>
@@ -557,6 +601,8 @@ color:#f1c40f;
     <div>전적 : <span id="myWL"></span></div>
     <div>승률 : <span id="myRate"></span>%</div>
     <div>내 등수 : <b><span id="myRank"></span></b></div>
+<div id="myRecent">최근 5판 : -</div>
+
   </div>
 
 </div>
