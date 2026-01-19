@@ -365,27 +365,6 @@ onValue(ref(db, "defenseTeams"), (snap) => {
   });
 });
 
-  /* 길드원 버튼 로그 */
-  if(v.result === "win") s[v.nick].w += 1;
-  if(v.result === "lose") s[v.nick].l += 1;
-
-  /* 관리자 수동 로그 */
-  if(v.type === "win") s[v.nick].w += v.delta;
-  if(v.type === "lose") s[v.nick].l += v.delta;
-});
-
-  const r=Object.entries(s).map(([n,v])=>{
-    const t=v.w+v.l;
-    return {n,w:v.w,l:v.l,r:t?Math.round(v.w/t*100):0};
-  }).sort((a,b)=>b.r-a.r).slice(0,3);
-  rankBox.innerHTML="";
-  ["🥇","🥈","🥉"].forEach((m,i)=>{
-    if(r[i]){
-      rankBox.innerHTML+=`${m} ${r[i].n} ${r[i].r}% (${r[i].w}승 ${r[i].l}패)<br>`;
-    }
-  });
-});
-
 onValue(ref(db,"logs"), snap=>{
   const sel = document.getElementById("adminNickSelect");
   if(!sel || !snap.exists()) return;
