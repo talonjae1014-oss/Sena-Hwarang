@@ -22,6 +22,22 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
+
+/* ===== DOM 캐싱 (module 필수) ===== */
+const rankBox = document.getElementById("rankBox");
+const myCard = document.getElementById("myCard");
+
+const myNickCard = document.getElementById("myNickCard");
+const myWL = document.getElementById("myWL");
+const myRate = document.getElementById("myRate");
+const myRank = document.getElementById("myRank");
+
+const profileNick = document.getElementById("profileNick");
+const profileWin = document.getElementById("profileWin");
+const profileLose = document.getElementById("profileLose");
+const profileRate = document.getElementById("profileRate");
+const profileFav = document.getElementById("profileFav");
+
 const ADMIN_PW = "1513";
 
 let myNick = "";
