@@ -245,12 +245,65 @@ window.editAttack = ()=>{
 window.delAttack = ()=>{ if(checkPW()) remove(ref(db,`defenseTeams/${currentDefense}/attackTeams/${currentAttack}`)); };
 
 /* 개인 랭킹 */
-onValue(ref(db,"logs"),snap=>{
-  const s={};
+
+onValue(ref(db,"logs"), snap => {
   if(!snap.exists()) return;
 
-Object.values(snap.val()).forEach(v=>{
-  if(!s[v.nick]) s[v.nick]={w:0,l:0};
+  const stat = {};
+
+  Object.values(snap.val()).forEach(v=>{
+    if(!stat[v.nick]) stat[v.nick] = {w:0,l:0};
+
+    if(v.result === "win") stat[v.nick].w += 1;
+    if(v.result === "lose") stat[v.nick].l += 1;
+
+    if(v.type === "win") stat[v.nick].w += v.delta;
+    if(v.type === "lose") stat[v.nick].l += v.delta;
+  });
+
+  const list = Object.entries(stat).map(([n,v])=>{
+    const t = v.w + v.l;
+    const r = t ? Math.round(v.w / t * 100) : 0;
+    return { n, w:v.w, l:v.l, r };
+  })
+  .sort((a,b)=>b.w - a.w); // 승리 횟수 기준
+
+  /* 🏆 TOP3 */
+  rankBox.innerHTML = "<h4>🏆 승리 TOP3</h4>";
+
+  list.slice(0,3).forEach((u,i)=>{
+    const medal = ["🥇","🥈","🥉"][i];
+    const fire = u.r >= 70 ? " 🔥" : "";
+
+    rankBox.innerHTML += `
+      <div style="
+        border:1px solid #444;
+        border-radius:10px;
+        padding:10px;
+        margin-bottom:8px;
+        background:#111;
+      ">
+        <b>${medal} ${u.n}${fire}</b><br>
+        ${u.w}승 ${u.l}패<br>
+        승률 ${u.r}%
+      </div>
+    `;
+  });
+
+  /* 👤 내 카드 */
+  const myIndex = list.findIndex(v=>v.n === myNick);
+  if(myIndex !== -1){
+    const me = list[myIndex];
+
+    myCard.style.display = "block";
+    myNickCard.textContent = me.n;
+    myWL.textContent = `${me.w}승 ${me.l}패`;
+    myRate.textContent = me.r;
+    myRank.textContent = `${myIndex+1}위 / ${list.length}명`;
+  } else {
+    myCard.style.display = "none";
+  }
+});
 
 /* 👤 개인 프로필 카드 */
 onValue(ref(db, "logs"), async (snap) => {
@@ -474,8 +527,30 @@ color:#f1c40f;
 <div class="small"><a href="#" onclick="resetRecord()">승/패 초기화 (관리자)</a></div>
 <div>승 <span id="win">0</span> / 패 <span id="lose">0</span> / 승률 <span id="rate">0</span>%</div>
 
-<h3>🏆 개인 승률 TOP3</h3>
-<div id="rankBox"></div>
+<h3>🏆 개인 전적</h3>
+
+<div style="display:flex; gap:12px; flex-wrap:wrap">
+
+  <!-- 왼쪽 : 승리 TOP3 -->
+  <div id="rankBox" style="flex:1"></div>
+
+  <!-- 오른쪽 : 내 카드 -->
+  <div id="myCard" style="
+    flex:1;
+    border:2px solid #f1c40f;
+    border-radius:12px;
+    padding:12px;
+    background:#000;
+    display:none;
+  ">
+    <h4>👤 내 전적</h4>
+    <div>닉네임 : <b id="myNickCard"></b></div>
+    <div>전적 : <span id="myWL"></span></div>
+    <div>승률 : <span id="myRate"></span>%</div>
+    <div>내 등수 : <b><span id="myRank"></span></b></div>
+  </div>
+
+</div>
 
 <button id="adminBtn" class="adminBtn" onclick="toggleAdmin()">+ 관리자용</button>
 
