@@ -291,9 +291,6 @@ onValue(ref(db,"logs"), snap => {
 
     if(v.result === "win") stat[v.nick].w += 1;
     if(v.result === "lose") stat[v.nick].l += 1;
-
-    if(v.type === "win") stat[v.nick].w += v.delta;
-    if(v.type === "lose") stat[v.nick].l += v.delta;
   });
 
 const list = Object.entries(stat)
