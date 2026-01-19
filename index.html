@@ -126,7 +126,14 @@ window.loadAttackTeams = (dk) => {
       const r=t?Math.round(av.win/t*100):0;
       const b=document.createElement("button");
       b.textContent=`${r>=70?"🔥 ":""}${av.name} ${r}% (${av.win}승 ${av.lose}패)`;
-      b.onclick=()=>selectAttack(dk,ak);
+      b.onclick = () => {
+  document
+    .querySelectorAll("#attackList button")
+    .forEach(btn => btn.classList.remove("active"));
+
+  b.classList.add("active");
+  selectAttack(dk, ak);
+};
       attackList.appendChild(b);
     });
   });
@@ -195,18 +202,46 @@ loadRecentRecord(dk, ak);
 };
 
 /* 승/패 */
+
 window.addWin = async () => {
-  if(!currentAttack) return;
-  if(!await canInput()) return alert("하루 최대 5회");
-  if(!confirm("승리하셨나요?\n장난으로 누르면 길마가 매우 화납니다.")) return;
-  update(ref(db,`defenseTeams/${currentDefense}/attackTeams/${currentAttack}`),{win:+win.textContent+1});
+  if (!currentAttack) return;
+  if (!await canInput()) return alert("하루 최대 5회");
+
+  const defenseName =
+    defenseSelect.options[defenseSelect.selectedIndex]?.text.split(" (")[0] || "";
+  const attackName = document.getElementById("cardName")?.textContent || "";
+
+  if (
+    !confirm(
+      `『${defenseName}』을(를)\n『${attackName}』으로 공격하여\n【승리】한 것이 맞습니까?`
+    )
+  ) return;
+
+  update(
+    ref(db, `defenseTeams/${currentDefense}/attackTeams/${currentAttack}`),
+    { win: +win.textContent + 1 }
+  );
   writeLog("win");
 };
+
 window.addLose = async () => {
-  if(!currentAttack) return;
-  if(!await canInput()) return alert("하루 최대 5회");
-  if(!confirm("패배하셨나요?\n장난으로 누르면 길마가 매우 화납니다.")) return;
-  update(ref(db,`defenseTeams/${currentDefense}/attackTeams/${currentAttack}`),{lose:+lose.textContent+1});
+  if (!currentAttack) return;
+  if (!await canInput()) return alert("하루 최대 5회");
+
+  const defenseName =
+    defenseSelect.options[defenseSelect.selectedIndex]?.text.split(" (")[0] || "";
+  const attackName = document.getElementById("cardName")?.textContent || "";
+
+  if (
+    !confirm(
+      `『${defenseName}』을(를)\n『${attackName}』으로 공격하여\n【패배】한 것이 맞습니까?`
+    )
+  ) return;
+
+  update(
+    ref(db, `defenseTeams/${currentDefense}/attackTeams/${currentAttack}`),
+    { lose: +lose.textContent + 1 }
+  );
   writeLog("lose");
 };
 
