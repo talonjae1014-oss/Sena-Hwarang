@@ -296,11 +296,13 @@ onValue(ref(db,"logs"), snap => {
     if(v.type === "lose") stat[v.nick].l += v.delta;
   });
 
-  const list = Object.entries(stat).map(([n,v])=>{
+const list = Object.entries(stat)
+  .map(([n,v])=>{
     const t = v.w + v.l;
     const r = t ? Math.round(v.w / t * 100) : 0;
-    return { n, w:v.w, l:v.l, r };
+    return { n, w:v.w, l:v.l, r, t };
   })
+  .filter(u => u.t > 0)   // ⭐ 0승 0패 유저 제외
   .sort((a,b)=>b.w - a.w); // 승리 횟수 기준
 
   /* 🏆 TOP3 */
