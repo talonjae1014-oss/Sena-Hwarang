@@ -272,23 +272,32 @@ onValue(ref(db,"logs"), snap => {
   rankBox.innerHTML = "<h4>🏆 승리 TOP3</h4>";
 
   list.slice(0,3).forEach((u,i)=>{
-    const medal = ["🥇","🥈","🥉"][i];
-    const fire = u.r >= 70 ? " 🔥" : "";
+  const medal = ["🥇","🥈","🥉"][i];
+  const fire = u.r >= 70 ? " 🔥" : "";
 
-    rankBox.innerHTML += `
-      <div style="
-        border:1px solid #444;
-        border-radius:10px;
-        padding:10px;
-        margin-bottom:8px;
-        background:#111;
-      ">
-        <b>${medal} ${u.n}${fire}</b><br>
-        ${u.w}승 ${u.l}패<br>
-        승률 ${u.r}%
-      </div>
-    `;
-  });
+  const borderColor = [
+    "#f1c40f", // 🥇 금
+    "#bdc3c7", // 🥈 은
+    "#cd7f32"  // 🥉 동
+  ][i];
+
+const glowClass = i === 0 ? "rank-first" : "";
+
+rankBox.innerHTML += `
+  <div class="${glowClass}" style="
+    border:2px solid ${borderColor};
+    border-radius:12px;
+    padding:10px;
+    margin-bottom:10px;
+    background:#111;
+  ">
+
+      <b>${medal} ${u.n}${fire}</b><br>
+      ${u.w}승 ${u.l}패<br>
+      승률 ${u.r}%
+    </div>
+  `;
+});
 
   /* 👤 내 카드 */
   const myIndex = list.findIndex(v=>v.n === myNick);
@@ -414,6 +423,24 @@ button,input,select,textarea{width:100%;margin-top:8px;padding:12px}
 .admin{display:none;border-top:2px solid #444;margin-top:20px;padding-top:15px}
 .footer{margin-top:30px;border:1px solid #555;padding:10px;text-align:center}
 .small{font-size:12px;color:#aaa}
+
+/* 🥇 1등 강조 효과 */
+.rank-first {
+  animation: goldGlow 1.6s ease-in-out infinite;
+}
+
+@keyframes goldGlow {
+  0% {
+    box-shadow: 0 0 4px rgba(241,196,15,0.4);
+  }
+  50% {
+    box-shadow: 0 0 14px rgba(241,196,15,0.9);
+  }
+  100% {
+    box-shadow: 0 0 4px rgba(241,196,15,0.4);
+  }
+}
+
 </style>
 </head>
 
@@ -514,15 +541,18 @@ color:#f1c40f;
   <div id="rankBox" style="flex:1"></div>
 
   <!-- 오른쪽 : 내 카드 -->
-  <div id="myCard" style="
-    flex:1;
-    border:2px solid #f1c40f;
-    border-radius:12px;
-    padding:12px;
-    background:#000;
-    display:none;
-  ">
-    <h4>👤 내 전적</h4>
+
+<div id="myCard" style="
+  flex:1;
+  border:2px solid #ff4d4d;
+  border-radius:10px;
+  padding:8px;
+  background:#000;
+  display:none;
+  font-size:13px;
+">
+
+    <h4 style="margin:4px 0;font-size:14px">👤 내 전적</h4>
     <div>닉네임 : <b id="myNickCard"></b></div>
     <div>전적 : <span id="myWL"></span></div>
     <div>승률 : <span id="myRate"></span>%</div>
