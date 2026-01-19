@@ -149,6 +149,26 @@ window.selectAttack = (dk,ak) => {
     ringRec.value=d.ring;
     armorRec.value=d.armor;
     skillOrder.value=d.skill;
+
+    /* === 공격팀 요약 카드 === */
+    attackCard.style.display = "block";
+
+    cardName.textContent = d.name;
+    cardWin.textContent = d.win;
+    cardLose.textContent = d.lose;
+
+    const total = d.win + d.lose;
+    cardTotal.textContent = total;
+
+    const rateVal = total ? Math.round(d.win / total * 100) : 0;
+    cardRate.textContent = rateVal;
+    cardFire.textContent = rateVal >= 70 ? "🔥" : "";
+
+    cardType.textContent = d.type || "-";
+    cardRing.textContent = d.ring || "-";
+    cardArmor.innerHTML = (d.armor || "-").replace(/\n/g,"<br>");
+    cardSkill.textContent = d.skill || "-";
+
   });
 };
 
@@ -308,6 +328,35 @@ color:#f1c40f;
 
 <h3>⚔ 공격팀 목록</h3>
 <div id="attackList"></div>
+
+<div id="attackCard" style="display:none;
+  border:2px solid #444;
+  padding:14px;
+  margin:12px 0;
+  border-radius:8px;
+  background:#000;">
+  
+  <div style="font-size:18px;font-weight:bold;margin-bottom:6px">
+    ⚔ 공격팀 : <span id="cardName"></span>
+  </div>
+
+  <div>
+    승률 : <span id="cardRate"></span>% 
+    <span id="cardFire" style="color:#ff6b6b"></span>
+  </div>
+  <div>
+    전적 : <span id="cardWin"></span>승 /
+    <span id="cardLose"></span>패
+    (<span id="cardTotal"></span>판)
+  </div>
+
+  <hr style="border-color:#333;margin:10px 0">
+
+  <div>▶ 추천 타입 : <b><span id="cardType"></span></b></div>
+  <div>▶ 반지 추천<br><span id="cardRing"></span></div>
+  <div>▶ 방어구 추천<br><span id="cardArmor"></span></div>
+  <div>▶ 스킬 순서<br><span id="cardSkill"></span></div>
+</div>
 
 <h3>📦 세팅 정보</h3>
 <div>타입 : <span id="typeView"></span></div>
