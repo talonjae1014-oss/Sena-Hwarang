@@ -281,7 +281,10 @@ onValue(ref(db,"logs"), snap => {
     "#cd7f32"  // 🥉 동
   ][i];
 
-const glowClass = i === 0 ? "rank-first" : "";
+const glowClass =
+  i === 0 ? "rank-first" :
+  i === 1 ? "rank-second" :
+  i === 2 ? "rank-third" : "";
 
 rankBox.innerHTML += `
   <div class="${glowClass}" style="
@@ -444,6 +447,40 @@ button,input,select,textarea{width:100%;margin-top:8px;padding:12px}
 /* 🥇 1등 강조 효과 */
 .rank-first {
   animation: goldGlow 1.6s ease-in-out infinite;
+}
+
+/* 🥈 2등 강조 효과 */
+.rank-second {
+  animation: silverGlow 2s ease-in-out infinite;
+}
+
+/* 🥉 3등 강조 효과 */
+.rank-third {
+  animation: bronzeGlow 2s ease-in-out infinite;
+}
+
+@keyframes silverGlow {
+  0% {
+    box-shadow: 0 0 4px rgba(189,195,199,0.4);
+  }
+  50% {
+    box-shadow: 0 0 12px rgba(189,195,199,0.85);
+  }
+  100% {
+    box-shadow: 0 0 4px rgba(189,195,199,0.4);
+  }
+}
+
+@keyframes bronzeGlow {
+  0% {
+    box-shadow: 0 0 4px rgba(205,127,50,0.4);
+  }
+  50% {
+    box-shadow: 0 0 12px rgba(205,127,50,0.85);
+  }
+  100% {
+    box-shadow: 0 0 4px rgba(205,127,50,0.4);
+  }
 }
 
 @keyframes goldGlow {
