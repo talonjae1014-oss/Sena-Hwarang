@@ -252,6 +252,66 @@ onValue(ref(db,"logs"),snap=>{
 Object.values(snap.val()).forEach(v=>{
   if(!s[v.nick]) s[v.nick]={w:0,l:0};
 
+/* 👤 개인 프로필 카드 */
+onValue(ref(db, "logs"), async (snap) => {
+  if (!snap.exists() || !myNick) return;
+
+  let win = 0;
+  let lose = 0;
+
+  /* 개인 승/패 계산 */
+  Object.values(snap.val()).forEach(v => {
+    if (v.nick !== myNick) return;
+
+    if (v.result === "win") win++;
+    if (v.result === "lose") lose++;
+
+    if (v.type === "win") win += v.delta;
+    if (v.type === "lose") lose += v.delta;
+  });
+
+  const total = win + lose;
+  const rate = total ? Math.round(win / total * 100) : 0;
+
+  profileNick.textContent = myNick;
+  profileWin.textContent = win;
+  profileLose.textContent = lose;
+  profileRate.textContent = rate;
+});
+
+/* 선호 공격팀 TOP3 */
+onValue(ref(db, "defenseTeams"), (snap) => {
+  if (!snap.exists()) return;
+
+  const stats = {};
+
+  Object.values(snap.val()).forEach(def => {
+    Object.values(def.attackTeams || {}).forEach(atk => {
+      const total = atk.win + atk.lose;
+      if (total < 3) return; // 표본 너무 적은 건 제외
+
+      const rate = Math.round(atk.win / total * 100);
+      stats[atk.name] = {
+        name: atk.name,
+        type: atk.type || "",
+        rate
+      };
+    });
+  });
+
+  const top = Object.values(stats)
+    .sort((a, b) => b.rate - a.rate)
+    .slice(0, 3);
+
+  profileFav.innerHTML = "";
+  ["1️⃣", "2️⃣", "3️⃣"].forEach((m, i) => {
+    if (top[i]) {
+      profileFav.innerHTML +=
+        `${m} ${top[i].type}-${top[i].name} (${top[i].rate}%)<br>`;
+    }
+  });
+});
+
   /* 길드원 버튼 로그 */
   if(v.result === "win") s[v.nick].w += 1;
   if(v.result === "lose") s[v.nick].l += 1;
@@ -343,6 +403,29 @@ right:12px;
 font-size:13px;
 color:#f1c40f;
 ">
+</div>
+
+<!-- 👤 프로필 카드 -->
+<div id="profileCard" style="
+  border:1px solid #444;
+  padding:10px;
+  border-radius:8px;
+  margin:12px 0;
+  background:#000;
+  font-size:13px;
+">
+  <div style="font-weight:bold;margin-bottom:6px">👤 프로필</div>
+
+  <div>현재 접속중 닉네임 : <b id="profileNick"></b></div>
+  <div>
+    이번 시즌 전적 :
+    <b><span id="profileRate">0</span>%</b>
+    (<span id="profileWin">0</span>승
+    <span id="profileLose">0</span>패)
+  </div>
+
+  <div style="margin-top:6px">선호 공격팀 :</div>
+  <div id="profileFav" style="margin-left:8px"></div>
 </div>
 
 <h3>🎯 공격할 대상 선택</h3>
