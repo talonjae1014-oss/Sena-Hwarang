@@ -22,22 +22,6 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
-
-/* ===== DOM 캐싱 (module 필수) ===== */
-const rankBox = document.getElementById("rankBox");
-const myCard = document.getElementById("myCard");
-
-const myNickCard = document.getElementById("myNickCard");
-const myWL = document.getElementById("myWL");
-const myRate = document.getElementById("myRate");
-const myRank = document.getElementById("myRank");
-
-const profileNick = document.getElementById("profileNick");
-const profileWin = document.getElementById("profileWin");
-const profileLose = document.getElementById("profileLose");
-const profileRate = document.getElementById("profileRate");
-const profileFav = document.getElementById("profileFav");
-
 const ADMIN_PW = "1513";
 
 let myNick = "";
@@ -295,68 +279,74 @@ window.editAttack = ()=>{
 };
 window.delAttack = ()=>{ if(checkPW()) remove(ref(db,`defenseTeams/${currentDefense}/attackTeams/${currentAttack}`)); };
 
-/* 🏆 랭킹 (프로필 카드 기준) */
+/* 개인 랭킹 */
 
-onValue(ref(db, "logs"), (snap) => {
-  if (!snap.exists()) return;
+onValue(ref(db,"logs"), snap => {
+  if(!snap.exists()) return;
 
   const stat = {};
 
-  Object.values(snap.val()).forEach(v => {
-    if (!stat[v.nick]) stat[v.nick] = { w: 0, l: 0 };
+  Object.values(snap.val()).forEach(v=>{
+    if(!stat[v.nick]) stat[v.nick] = {w:0,l:0};
 
-    if (v.result === "win") stat[v.nick].w++;
-    if (v.result === "lose") stat[v.nick].l++;
+    if(v.result === "win") stat[v.nick].w += 1;
+    if(v.result === "lose") stat[v.nick].l += 1;
 
-    // 관리자 수동 보정
-    if (v.type === "win") stat[v.nick].w += v.delta;
-    if (v.type === "lose") stat[v.nick].l += v.delta;
+    if(v.type === "win") stat[v.nick].w += v.delta;
+    if(v.type === "lose") stat[v.nick].l += v.delta;
   });
 
-  const list = Object.entries(stat)
-    .map(([n, v]) => {
-      const t = v.w + v.l;
-      const r = t ? Math.round(v.w / t * 100) : 0;
-      return { n, w: v.w, l: v.l, r, t };
-    })
-    .filter(u => u.t > 0)      // ✅ 0판 유저 제거
-    .sort((a, b) => b.w - a.w); // 승리수 기준
+  const list = Object.entries(stat).map(([n,v])=>{
+    const t = v.w + v.l;
+    const r = t ? Math.round(v.w / t * 100) : 0;
+    return { n, w:v.w, l:v.l, r };
+  })
+  .sort((a,b)=>b.w - a.w); // 승리 횟수 기준
 
-  /* TOP3 */
+  /* 🏆 TOP3 */
   rankBox.innerHTML = "<h4>🏆 승리 TOP3</h4>";
 
-  list.slice(0, 3).forEach((u, i) => {
-    const medal = ["🥇", "🥈", "🥉"][i];
-    const glow =
-      i === 0 ? "rank-first" :
-      i === 1 ? "rank-second" :
-      "rank-third";
+  list.slice(0,3).forEach((u,i)=>{
+  const medal = ["🥇","🥈","🥉"][i];
+  const fire = u.r >= 70 ? " 🔥" : "";
 
-    rankBox.innerHTML += `
-      <div class="${glow}" style="
-        border:2px solid #444;
-        border-radius:10px;
-        padding:10px;
-        margin-bottom:8px;
-        background:#111;
-      ">
-        <b>${medal} ${u.n}</b><br>
-        ${u.w}승 ${u.l}패<br>
-        승률 ${u.r}%
-      </div>
-    `;
-  });
+  const borderColor = [
+    "#f1c40f", // 🥇 금
+    "#bdc3c7", // 🥈 은
+    "#cd7f32"  // 🥉 동
+  ][i];
+
+const glowClass =
+  i === 0 ? "rank-first" :
+  i === 1 ? "rank-second" :
+  i === 2 ? "rank-third" : "";
+
+rankBox.innerHTML += `
+  <div class="${glowClass}" style="
+    border:2px solid ${borderColor};
+    border-radius:12px;
+    padding:10px;
+    margin-bottom:10px;
+    background:#111;
+  ">
+
+      <b>${medal} ${u.n}${fire}</b><br>
+      ${u.w}승 ${u.l}패<br>
+      승률 ${u.r}%
+    </div>
+  `;
+});
 
   /* 👤 내 카드 */
-  const myIndex = list.findIndex(v => v.n === myNick);
-
-  if (myIndex !== -1) {
+  const myIndex = list.findIndex(v=>v.n === myNick);
+  if(myIndex !== -1){
     const me = list[myIndex];
+
     myCard.style.display = "block";
     myNickCard.textContent = me.n;
     myWL.textContent = `${me.w}승 ${me.l}패`;
     myRate.textContent = me.r;
-    myRank.textContent = `${myIndex + 1}위 / ${list.length}명`;
+    myRank.textContent = `${myIndex+1}위 / ${list.length}명`;
   } else {
     myCard.style.display = "none";
   }
