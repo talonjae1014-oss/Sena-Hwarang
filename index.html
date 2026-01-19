@@ -29,6 +29,7 @@ let currentDefense = "";
 let currentAttack = "";
 let adminOpen = false;
 
+
 /* 최초 닉네임 */
 window.onload = () => {
   myNick = localStorage.getItem("nickname");
@@ -90,6 +91,8 @@ function writeLog(result){
   set(push(ref(db,"logs")),{
     nick: myNick,
     result,
+    defense: currentDefense,
+    attack: currentAttack,
     date: new Date().toISOString().slice(0,10),
     time: Date.now()
   });
@@ -129,6 +132,28 @@ window.loadAttackTeams = (dk) => {
   });
 };
 
+async function loadRecentRecord(defenseKey, attackKey){
+  const snap = await get(ref(db,"logs"));
+  if(!snap.exists()) return;
+
+  // 최신순 정렬
+  const logs = Object.values(snap.val())
+    .filter(v =>
+      v.defense === defenseKey &&
+      v.attack === attackKey
+    )
+    .sort((a,b)=>b.time-a.time)
+    .slice(0,5); // 최근 5판
+
+  let html = "";
+  logs.forEach(v=>{
+    if(v.result === "win") html += "🟢 ";
+    if(v.result === "lose") html += "🔴 ";
+  });
+
+  document.getElementById("recentRecord").innerHTML = html || "-";
+}
+
 /* 공격팀 선택 */
 window.selectAttack = (dk,ak) => {
   currentAttack = ak;
@@ -163,6 +188,8 @@ window.selectAttack = (dk,ak) => {
     cardRing.textContent = d.ring || "-";
     cardArmor.innerHTML = (d.armor || "-").replace(/\n/g,"<br>");
     cardSkill.textContent = d.skill || "-";
+
+loadRecentRecord(dk, ak);
 
   });
 };
@@ -344,6 +371,11 @@ color:#f1c40f;
     <span id="cardLose"></span>패
     (<span id="cardTotal"></span>판)
   </div>
+
+<div style="margin-top:6px">
+  최근 전적 :
+  <span id="recentRecord"></span>
+</div>
 
   <hr style="border-color:#333;margin:10px 0">
 
