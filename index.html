@@ -407,7 +407,7 @@ onValue(ref(db, "logs"), async (snap) => {
     if (v.nick !== myNick) return;
     if (!v.attack || !v.defense) return;
 
-    const key = v.defense + "/" + v.attack;
+    const key = v.attack;
 
     if (!stats[key]) {
       stats[key] = { win: 0, lose: 0 };
@@ -426,10 +426,15 @@ onValue(ref(db, "logs"), async (snap) => {
   const list = [];
 
   Object.entries(stats).forEach(([key, v]) => {
-    const [defKey, atkKey] = key.split("/");
+    const atkKey = key;
 
-    const atk =
-      defs?.[defKey]?.attackTeams?.[atkKey];
+    let atk = null;
+
+Object.values(defs).forEach(def => {
+  if (def.attackTeams?.[atkKey]) {
+    atk = def.attackTeams[atkKey];
+  }
+});
 
     if (!atk) return;
 
