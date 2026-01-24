@@ -396,25 +396,44 @@ onValue(ref(db, "logs"), async (snap) => {
   }
 });
 
-/* 선호 공격팀 TOP3 */
-onValue(ref(db, "defenseTeams"), (snap) => {
-  if (!snap.exists()) return;
+/* 선호 공격팀 TOP3 (내 기록 기준) */
+onValue(ref(db, "logs"), (snap) => {
+  if (!snap.exists() || !myNick) return;
 
   const stats = {};
 
-  Object.values(snap.val()).forEach(def => {
-    Object.values(def.attackTeams || {}).forEach(atk => {
-      const total = atk.win + atk.lose;
-      if (total < 3) return; // 표본 너무 적은 건 제외
+  Object.values(snap.val()).forEach(v => {
+    if (v.nick !== myNick) return;
+    if (!v.attack) return;
 
-      const rate = Math.round(atk.win / total * 100);
-      stats[atk.name] = {
-        name: atk.name,
-        type: atk.type || "",
-        rate
-      };
-    });
+    if (!stats[v.attack]) {
+      stats[v.attack] = { win: 0, lose: 0 };
+    }
+
+    if (v.result === "win") stats[v.attack].win++;
+    if (v.result === "lose") stats[v.attack].lose++;
   });
+
+  const list = Object.entries(stats)
+    .map(([k, v]) => {
+      const t = v.win + v.lose;
+      const r = t ? Math.round(v.win / t * 100) : 0;
+      return { key: k, w: v.win, l: v.lose, r, t };
+    })
+    .filter(v => v.t >= 3) // 최소 3판 이상
+    .sort((a, b) => {
+      if (b.r !== a.r) return b.r - a.r;
+      return b.t - a.t;
+    })
+    .slice(0, 3);
+
+  profileFav.innerHTML = "";
+
+  list.forEach((v, i) => {
+    profileFav.innerHTML +=
+      `${i+1}️⃣ ${v.r}% (${v.w}승 ${v.l}패)<br>`;
+  });
+});
 
   const top = Object.values(stats)
     .sort((a, b) => b.rate - a.rate)
