@@ -87,12 +87,29 @@ async function canInput(){
 }
 
 /* 로그 */
-function writeLog(result){
+async function writeLog(result){
+
+  if(!currentDefense || !currentAttack) return;
+
+  // DB에서 공격덱 정보 직접 읽기
+  const snap = await get(
+    ref(db, `defenseTeams/${currentDefense}/attackTeams/${currentAttack}`)
+  );
+
+  if(!snap.exists()) return;
+
+  const atk = snap.val();
+
   set(push(ref(db,"logs")),{
     nick: myNick,
     result,
     defense: currentDefense,
     attack: currentAttack,
+
+    // ⭐ 이름/타입 확실히 저장
+    attackName: atk.name || "",
+    attackType: atk.type || "",
+
     date: new Date().toISOString().slice(0,10),
     time: Date.now()
   });
