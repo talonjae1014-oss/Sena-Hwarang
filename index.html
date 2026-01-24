@@ -396,16 +396,16 @@ onValue(ref(db, "logs"), async (snap) => {
   }
 });
 
-/* 선호 공격팀 TOP3 (내 기록 기준, 이름 매칭) */
+/* 선호 공격팀 TOP3 (공격덱 기준 통합) */
 onValue(ref(db, "logs"), async (snap) => {
   if (!snap.exists() || !myNick) return;
 
-  // 1. 내 로그 수집
   const stats = {};
 
+  // 1. 로그 집계 (attack 기준)
   Object.values(snap.val()).forEach(v => {
     if (v.nick !== myNick) return;
-    if (!v.attack || !v.defense) return;
+    if (!v.attack) return;
 
     const key = v.attack;
 
@@ -417,24 +417,22 @@ onValue(ref(db, "logs"), async (snap) => {
     if (v.result === "lose") stats[key].lose++;
   });
 
-  // 2. defenseTeams 불러오기
+  // 2. 공격덱 이름 찾기
   const defSnap = await get(ref(db, "defenseTeams"));
   if (!defSnap.exists()) return;
 
   const defs = defSnap.val();
-
   const list = [];
 
-  Object.entries(stats).forEach(([key, v]) => {
-    const atkKey = key;
+  Object.entries(stats).forEach(([atkKey, v]) => {
 
     let atk = null;
 
-Object.values(defs).forEach(def => {
-  if (def.attackTeams?.[atkKey]) {
-    atk = def.attackTeams[atkKey];
-  }
-});
+    Object.values(defs).forEach(def => {
+      if (def.attackTeams?.[atkKey]) {
+        atk = def.attackTeams[atkKey];
+      }
+    });
 
     if (!atk) return;
 
