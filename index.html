@@ -398,7 +398,12 @@ onValue(ref(db, "logs"), async (snap) => {
 
 /* 선호 공격팀 TOP3 (내 기록 기준) */
 onValue(ref(db, "logs"), (snap) => {
-  if (!snap.exists() || !myNick) return;
+  if (!snap.exists()) return;
+
+  if (!myNick) {
+    profileFav.innerHTML = "";
+    return;
+  }
 
   const stats = {};
 
@@ -420,7 +425,7 @@ onValue(ref(db, "logs"), (snap) => {
       const r = t ? Math.round(v.win / t * 100) : 0;
       return { key: k, w: v.win, l: v.lose, r, t };
     })
-    .filter(v => v.t >= 3) // 최소 3판 이상
+    .filter(v => v.t >= 1) // 일단 1판 이상만 (테스트용)
     .sort((a, b) => {
       if (b.r !== a.r) return b.r - a.r;
       return b.t - a.t;
@@ -429,22 +434,14 @@ onValue(ref(db, "logs"), (snap) => {
 
   profileFav.innerHTML = "";
 
+  if (list.length === 0) {
+    profileFav.innerHTML = "기록 없음";
+    return;
+  }
+
   list.forEach((v, i) => {
     profileFav.innerHTML +=
       `${i+1}️⃣ ${v.r}% (${v.w}승 ${v.l}패)<br>`;
-  });
-});
-
-  const top = Object.values(stats)
-    .sort((a, b) => b.rate - a.rate)
-    .slice(0, 3);
-
-  profileFav.innerHTML = "";
-  ["1️⃣", "2️⃣", "3️⃣"].forEach((m, i) => {
-    if (top[i]) {
-      profileFav.innerHTML +=
-        `${m} ${top[i].type}-${top[i].name} (${top[i].rate}%)<br>`;
-    }
   });
 });
 
