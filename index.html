@@ -3,7 +3,304 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>🔥 화랑 길드전 사이트</title>
+<title>🔥 화랑 길드전 (Dark UI)</title>
+<style>
+  /* --- 스타일 3: 다크 모드 & 글래스모피즘 디자인 --- */
+  
+  :root {
+    --bg-color: #050505;
+    --text-color: #e0e0e0;
+    --accent-color: #4facfe;
+    --glass-bg: rgba(255, 255, 255, 0.05);
+    --glass-border: rgba(255, 255, 255, 0.1);
+    --glass-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+  }
+
+  body {
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    font-family: 'Suit', sans-serif;
+    margin: 0;
+    padding: 20px;
+    box-sizing: border-box;
+    padding-bottom: 80px; /* footer 공간 확보 */
+  }
+
+  h1, h2, h3, h4 { margin: 0 0 10px 0; font-weight: 700; color: #fff; }
+  
+  /* 입력창 및 버튼 공통 스타일 */
+  input, select, textarea {
+    background: #1a1a1a;
+    border: 1px solid #333;
+    color: #fff;
+    padding: 10px;
+    border-radius: 6px;
+    width: 100%;
+    box-sizing: border-box;
+    margin-bottom: 5px;
+  }
+  
+  button {
+    cursor: pointer;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 6px;
+    font-weight: bold;
+    transition: 0.2s;
+  }
+
+  /* 메인 액션 버튼 */
+  .action-btn { background: var(--accent-color); color: #000; }
+  .action-btn:hover { filter: brightness(1.2); }
+  
+  /* --- 커스텀 드롭다운 (방어팀 선택) --- */
+  .dropdown-container {
+    margin-bottom: 25px;
+    position: relative;
+    max-width: 100%;
+    z-index: 1000;
+  }
+
+  .dropdown-label {
+    font-size: 0.9rem;
+    color: #888;
+    margin-bottom: 8px;
+    margin-left: 4px;
+  }
+
+  .glass-box {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: 12px;
+    padding: 18px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+    box-shadow: var(--glass-shadow);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .glass-box:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.3);
+    box-shadow: 0 0 15px rgba(79, 172, 254, 0.2);
+  }
+
+  #defCurrentText { font-weight: bold; font-size: 1.1rem; color: #fff; }
+
+  .dropdown-options {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    width: 100%;
+    background: #111;
+    border: 1px solid #333;
+    border-radius: 12px;
+    margin-top: 8px;
+    max-height: 350px;
+    overflow-y: auto;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.9);
+  }
+
+  .dropdown-options.show { display: block; animation: slideDown 0.2s ease-out; }
+
+  .option-item {
+    padding: 15px;
+    border-bottom: 1px solid #222;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  .option-item:hover { background: #222; color: var(--accent-color); }
+  .option-name { font-weight: bold; display: block; margin-bottom: 3px;}
+  .option-stat { font-size: 0.8rem; color: #777; }
+
+  /* --- 공격팀 리스트 --- */
+  #attackList {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+
+  .attack-btn {
+    background: #111;
+    border: 1px solid #333;
+    color: #ccc;
+    padding: 15px 5px;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    min-height: 80px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .attack-btn.active {
+    background: #000;
+    border: 1px solid var(--accent-color);
+    color: #fff;
+    box-shadow: 0 0 10px rgba(79, 172, 254, 0.4);
+  }
+
+  .attack-btn b { font-size: 1rem; margin-bottom: 5px; display: block; }
+  .fire-icon { color: #ff4444; font-weight: bold; }
+
+  /* --- 상세 정보 카드 --- */
+  #attackCard {
+    background: rgba(20, 20, 20, 0.8);
+    border: 1px solid #333;
+    border-radius: 12px;
+    padding: 20px;
+    margin-top: 20px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    display: none;
+  }
+
+  .stat-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin: 15px 0;
+    font-size: 0.9rem;
+  }
+  .stat-item { background: #222; padding: 10px; border-radius: 6px; }
+  .stat-label { color: #888; font-size: 0.75rem; display: block; margin-bottom: 3px; }
+
+  .win-btn { background: #28a745; color: #fff; width: 48%; padding: 15px; }
+  .lose-btn { background: #dc3545; color: #fff; width: 48%; padding: 15px; }
+  
+  /* --- 랭킹/통계 섹션 --- */
+  #rankingSection {
+    margin-top: 40px;
+    border-top: 1px solid #333;
+    padding-top: 20px;
+  }
+  .rank-item {
+    display: flex; justify-content: space-between;
+    padding: 10px; border-bottom: 1px solid #222;
+    font-size: 0.9rem;
+  }
+  .rank-item:last-child { border-bottom: none; }
+
+  /* --- 하단 제작자 Footer --- */
+  footer {
+    text-align: center;
+    margin-top: 50px;
+    padding: 20px;
+    color: #555;
+    font-size: 0.8rem;
+    border-top: 1px solid #111;
+  }
+
+  /* 애니메이션 */
+  @keyframes slideDown {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  #adminPanel {
+    background: #222; padding: 15px; border-radius: 10px; margin-top: 20px; display: none;
+    border: 1px solid #444;
+  }
+</style>
+</head>
+<body>
+
+<div id="loginScreen" style="text-align:center; margin-top:100px;">
+  <h2 style="font-size:2rem; margin-bottom:30px;">🔥 화랑 길드전</h2>
+  <div style="background:#111; padding:30px; border-radius:15px; display:inline-block; border:1px solid #333;">
+    <input type="text" id="nickInput" placeholder="닉네임 입력" style="width:200px; text-align:center; margin-bottom:15px;"><br>
+    <button class="action-btn" onclick="enterSite()" style="width:100%;">전투 입장하기</button>
+  </div>
+</div>
+
+<div id="mainScreen" style="display:none; max-width: 600px; margin: 0 auto;">
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+    <span id="currentNick" style="color:var(--accent-color); font-weight:bold;"></span>
+    <button onclick="toggleAdmin()" id="adminBtn" style="background:#333; color:#fff; font-size:0.8rem;">+ 관리자용</button>
+  </div>
+
+  <div class="dropdown-container">
+    <div class="dropdown-label">🛡️ 방어팀 선택</div>
+    <div id="defSelected" class="glass-box" onclick="toggleDropdown()">
+      <span id="defCurrentText">방어팀을 선택해주세요 ▼</span>
+    </div>
+    <div id="defOptions" class="dropdown-options">
+      </div>
+  </div>
+
+  <div id="attackList"></div>
+
+  <div id="attackCard">
+    <h2 style="border-bottom:1px solid #444; padding-bottom:10px;">
+      <span id="cardFire"></span> <span id="cardName"></span>
+      <span style="float:right; font-size:0.6em; color:#888; font-weight:normal;">
+        <span id="cardRate" style="color:#fff; font-size:1.4em; font-weight:bold;">0</span>%
+      </span>
+    </h2>
+
+    <div class="stat-grid">
+      <div class="stat-item"><span class="stat-label">전적</span><span id="cardWin">0</span>승 <span id="cardLose">0</span>패 (총 <span id="cardTotal">0</span>전)</div>
+      <div class="stat-item"><span class="stat-label">타입</span><span id="cardType">-</span></div>
+      <div class="stat-item"><span class="stat-label">진형/펫</span><span id="cardRing">-</span></div>
+      <div class="stat-item"><span class="stat-label">스킬순서</span><span id="cardSkill">-</span></div>
+      <div class="stat-item" style="grid-column: span 2;"><span class="stat-label">영웅/장비/특이사항</span><span id="cardArmor">-</span></div>
+      <div class="stat-item" style="grid-column: span 2;">
+        <span class="stat-label">최근 5경기 기록</span>
+        <div id="recentRecord" style="font-size:1.2rem; letter-spacing:3px; margin-top:5px;">-</div>
+      </div>
+    </div>
+
+    <div style="display:flex; justify-content:space-between; margin-top:15px;">
+      <button class="win-btn" onclick="addWin()">🏆 승리 기록</button>
+      <button class="lose-btn" onclick="addLose()">💀 패배 기록</button>
+    </div>
+    <div style="text-align:right; margin-top:10px;">
+       <button onclick="resetRecord()" style="background:transparent; color:#666; font-size:0.8rem; text-decoration:underline;">기록 초기화 (관리자)</button>
+    </div>
+  </div>
+
+  <div id="adminPanel">
+    <h3>🛠️ 데이터 관리</h3>
+    <hr style="border-color:#444;">
+    <h4>방어팀 관리</h4>
+    <input type="text" id="defName" placeholder="새 방어팀 이름">
+    <button onclick="addDefense()" style="background:#444; color:#fff;">추가</button>
+    <button onclick="delDefense()" style="background:#500; color:#fff;">현재 방어팀 삭제</button>
+    
+    <hr style="border-color:#444; margin:15px 0;">
+    <h4>공격팀(덱) 관리</h4>
+    <input type="text" id="atkName" placeholder="공격팀 이름">
+    <input type="text" id="atkType" placeholder="타입 (만능형 등)">
+    <input type="text" id="ringRec" placeholder="진형/펫">
+    <textarea id="armorRec" rows="3" placeholder="영웅/장비/특이사항"></textarea>
+    <input type="text" id="skillOrder" placeholder="스킬 순서">
+    <div style="margin-top:5px;">
+      <button onclick="addAttack()" style="background:#444; color:#fff;">추가</button>
+      <button onclick="editAttack()" style="background:#0056b3; color:#fff;">수정 저장</button>
+      <button onclick="delAttack()" style="background:#500; color:#fff;">삭제</button>
+    </div>
+  </div>
+
+  <div id="rankingSection">
+    <h3 style="color:#888; font-size:1rem;">📊 길드원 참여 현황</h3>
+    <div id="rankingList" style="background:#111; border-radius:8px; padding:10px;">
+      <div style="text-align:center; color:#555;">기록 로딩중...</div>
+    </div>
+  </div>
+
+  <footer>
+    <div style="margin-bottom:5px;">Designed & Developed by <b>화랑</b></div>
+    <div style="font-size:0.7rem; color:#444;">Copyright © 2024 Hwarang Guild. All rights reserved.</div>
+  </footer>
+
+</div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
@@ -29,51 +326,168 @@ let currentDefense = "";
 let currentAttack = "";
 let adminOpen = false;
 
-
-/* 최초 로드 및 닉네임 확인 */
 window.onload = () => {
   myNick = localStorage.getItem("nickname");
   if (!myNick) {
-    loginScreen.style.display = "block";
-    mainScreen.style.display = "none";
+    document.getElementById("loginScreen").style.display = "block";
+    document.getElementById("mainScreen").style.display = "none";
+  } else {
+    document.getElementById("loginScreen").style.display = "none";
+    document.getElementById("mainScreen").style.display = "block";
+    document.getElementById("currentNick").textContent = `사령관 : ${myNick}`;
   }
 };
 
 window.enterSite = () => {
-  const n = nickInput.value.trim();
+  const n = document.getElementById("nickInput").value.trim();
   if (!n) return alert("닉네임을 입력해주세요");
   myNick = n;
   localStorage.setItem("nickname", myNick);
-  loginScreen.style.display = "none";
-  mainScreen.style.display = "block";
-  document.getElementById("currentNick").textContent = `현재 닉네임 : ${myNick}`; 
+  document.getElementById("loginScreen").style.display = "none";
+  document.getElementById("mainScreen").style.display = "block";
+  document.getElementById("currentNick").textContent = `사령관 : ${myNick}`; 
 };
 
-/* 관리자 비번 확인 */
 function checkPW(){
   const pw = prompt("관리자 비밀번호 입력");
-  if(pw !== ADMIN_PW){
-    alert("비밀번호 오류");
-    return false;
-  }
+  if(pw !== ADMIN_PW) { alert("비밀번호 오류"); return false; }
   return true;
 }
 
-/* 관리자 메뉴 토글 */
 window.toggleAdmin = () => {
+  const panel = document.getElementById("adminPanel");
+  const btn = document.getElementById("adminBtn");
+  
   if(!adminOpen){
     if(!checkPW()) return;
-    adminPanel.style.display="block";
-    adminBtn.textContent="− 관리자용 닫기";
+    panel.style.display="block";
+    btn.textContent="− 관리자용 닫기";
     adminOpen=true;
   }else{
-    adminPanel.style.display="none";
-    adminBtn.textContent="+ 관리자용";
+    panel.style.display="none";
+    btn.textContent="+ 관리자용";
     adminOpen=false;
   }
 };
 
-/* 하루 5회 제한 체크 */
+/* 드롭다운 UI 제어 */
+window.toggleDropdown = () => {
+  document.getElementById("defOptions").classList.toggle("show");
+};
+
+window.addEventListener('click', (e) => {
+  if (!e.target.closest('.dropdown-container')) {
+    document.getElementById("defOptions").classList.remove("show");
+  }
+});
+
+/* 방어팀 목록 */
+onValue(ref(db, "defenseTeams"), snap => {
+  const optionsDiv = document.getElementById("defOptions");
+  optionsDiv.innerHTML = "";
+  
+  const d = snap.val();
+  if (!d) {
+    document.getElementById("defCurrentText").textContent = "데이터 없음";
+    return;
+  }
+  
+  Object.entries(d).forEach(([k, v]) => {
+    const tWins = Object.values(v.attackTeams || {}).reduce((a, b) => a + (b.win || 0), 0);
+    const tLose = Object.values(v.attackTeams || {}).reduce((a, b) => a + (b.lose || 0), 0);
+    const rate = (tWins + tLose) ? Math.round(tWins / (tWins + tLose) * 100) : 0;
+    
+    const div = document.createElement("div");
+    div.className = "option-item";
+    div.innerHTML = `<span class="option-name">${v.name}</span><span class="option-stat">성공률 ${rate}% (${tWins}승 ${tLose}패)</span>`;
+    div.onclick = () => {
+      document.getElementById("defCurrentText").innerHTML = `${v.name} <span style="font-size:0.8em; color:#888;">(${rate}%)</span>`;
+      document.getElementById("defOptions").classList.remove("show");
+      loadAttackTeams(k);
+    };
+    optionsDiv.appendChild(div);
+  });
+});
+
+/* 공격팀 목록 로드 */
+window.loadAttackTeams = (dk) => {
+  currentDefense = dk;
+  currentAttack = ""; 
+  const attackCard = document.getElementById("attackCard");
+  const attackList = document.getElementById("attackList");
+  
+  if(attackCard) attackCard.style.display = "none";
+  attackList.innerHTML = "";
+
+  onValue(ref(db, `defenseTeams/${dk}/attackTeams`), snap => {
+    attackList.innerHTML = "";
+    const d = snap.val(); if(!d) return;
+    
+    Object.entries(d).forEach(([ak, av]) => {
+      const t = av.win + av.lose;
+      const r = t ? Math.round(av.win/t*100) : 0;
+      
+      const b = document.createElement("button");
+      b.className = "attack-btn";
+      b.innerHTML = `<b>${r>=70 ? "<span class='fire-icon'>🔥</span> " : ""}${av.name}</b><span style="font-size:0.85rem; color:#888;">${r}% (${av.win}승 ${av.lose}패)</span>`;
+      
+      b.onclick = () => {
+        document.querySelectorAll(".attack-btn").forEach(btn => btn.classList.remove("active"));
+        b.classList.add("active");
+        selectAttack(dk, ak);
+      };
+      attackList.appendChild(b);
+    });
+  });
+};
+
+/* 상세 정보 로드 */
+window.selectAttack = (dk, ak) => {
+  currentAttack = ak;
+  onValue(ref(db,`defenseTeams/${dk}/attackTeams/${ak}`), snap => {
+    const d = snap.val(); if(!d) return;
+    const attackCard = document.getElementById("attackCard");
+    attackCard.style.display = "block";
+    
+    document.getElementById("cardName").textContent = d.name;
+    document.getElementById("cardWin").textContent = d.win;
+    document.getElementById("cardLose").textContent = d.lose;
+    
+    const total = d.win + d.lose;
+    document.getElementById("cardTotal").textContent = total;
+    const rateVal = total ? Math.round(d.win / total * 100) : 0;
+    document.getElementById("cardRate").textContent = rateVal;
+    document.getElementById("cardFire").textContent = rateVal >= 70 ? "🔥" : "";
+    
+    document.getElementById("cardType").textContent = d.type || "-";
+    document.getElementById("cardRing").textContent = d.ring || "-";
+    document.getElementById("cardArmor").innerHTML = (d.armor || "-").replace(/\n/g,"<br>");
+    document.getElementById("cardSkill").textContent = d.skill || "-";
+    
+    loadRecentRecord(dk, ak);
+
+    document.getElementById("atkName").value = d.name; 
+    document.getElementById("atkType").value = d.type; 
+    document.getElementById("ringRec").value = d.ring; 
+    document.getElementById("armorRec").value = d.armor; 
+    document.getElementById("skillOrder").value = d.skill;
+  });
+};
+
+async function loadRecentRecord(defenseKey, attackKey){
+  const snap = await get(ref(db,"logs"));
+  const recentDiv = document.getElementById("recentRecord");
+  if(!snap.exists()) { recentDiv.innerHTML = "-"; return; }
+  
+  const logs = Object.values(snap.val())
+    .filter(v => v.defense === defenseKey && v.attack === attackKey)
+    .sort((a,b)=>b.time-a.time).slice(0,5);
+    
+  let html = "";
+  logs.forEach(v => { html += (v.result === "win" ? "<span style='color:#4caf50;'>W</span> " : "<span style='color:#f44336;'>L</span> "); });
+  recentDiv.innerHTML = html || "-";
+}
+
 async function canInput(){
   const today = new Date().toISOString().slice(0,10);
   const snap = await get(ref(db,"logs"));
@@ -86,627 +500,110 @@ async function canInput(){
   return cnt < 5;
 }
 
-/* 로그 기록 (안전장치 강화됨) */
 async function writeLog(result){
-
-  // 🔒 1차 안전장치: 변수 값 확인
-  if(!currentDefense || !currentAttack){
-    alert("⚠️ 방어팀 혹은 공격팀 선택이 되지 않았습니다.");
-    return;
-  }
-
-  // DB에서 공격덱 정보 직접 읽기 (유효성 검사)
-  const snap = await get(
-    ref(db, `defenseTeams/${currentDefense}/attackTeams/${currentAttack}`)
-  );
-
-  // 🔒 2차 안전장치: 실제 DB 데이터 존재 여부 확인
-  // (방어팀 변경으로 인해 id가 꼬였을 경우 여기서 걸러짐)
-  if(!snap.exists()){
-    alert("⚠️ 선택된 공격팀 정보를 찾을 수 없습니다.\n화면을 갱신하거나 다시 선택해주세요.");
-    // UI 초기화
+  if(!currentDefense || !currentAttack) return alert("⚠️ 팀 선택 오류");
+  const snap = await get(ref(db, `defenseTeams/${currentDefense}/attackTeams/${currentAttack}`));
+  if(!snap.exists()) {
+    alert("⚠️ 데이터를 찾을 수 없습니다.");
     loadAttackTeams(currentDefense);
     return;
   }
-
   const atk = snap.val();
-
-  if(!atk || !atk.name){
-    alert("⚠️ 공격팀 데이터 오류.");
-    return;
-  }
-
   set(push(ref(db,"logs")),{
-    nick: myNick,
-    result,
-    defense: currentDefense,
-    attack: currentAttack,
-
-    // ⭐ 이름/타입 확실히 저장
-    attackName: atk.name || "",
-    attackType: atk.type || "",
-
-    date: new Date().toISOString().slice(0,10),
-    time: Date.now()
+    nick: myNick, result, defense: currentDefense, attack: currentAttack,
+    attackName: atk.name || "", attackType: atk.type || "",
+    date: new Date().toISOString().slice(0,10), time: Date.now()
   });
 }
 
-/* 방어팀 목록 불러오기 */
-onValue(ref(db,"defenseTeams"),snap=>{
-  defenseSelect.innerHTML="";
-  const d=snap.val(); if(!d) return;
-  
-  Object.entries(d).forEach(([k,v])=>{
-    const tWins = Object.values(v.attackTeams||{}).reduce((a,b)=>a+(b.win||0),0);
-    const tLose = Object.values(v.attackTeams||{}).reduce((a,b)=>a+(b.lose||0),0);
-    const rate = (tWins+tLose)?Math.round(tWins/(tWins+tLose)*100):0;
-    
-    const o=document.createElement("option");
-    o.value=k;
-    o.textContent=`${v.name} (${rate}% / ${tWins}승 ${tLose}패)`;
-    defenseSelect.appendChild(o);
-  });
-
-  // 목록 로드 후 현재 선택된 값으로 공격팀 로드
-  if(defenseSelect.value) {
-    loadAttackTeams(defenseSelect.value);
-  }
-});
-
-/* 공격팀 목록 불러오기 (수정됨: 초기화 로직 추가) */
-window.loadAttackTeams = (dk) => {
-  currentDefense = dk;
-  
-  // 🔥 [핵심 수정] 방어팀이 바뀌거나 로드될 때 공격팀 선택 초기화
-  currentAttack = ""; 
-  
-  // 🔥 [핵심 수정] 요약 카드 숨기기 (잔상 제거)
-  if(attackCard) attackCard.style.display = "none";
-  
-  // 버튼 목록 초기화
-  attackList.innerHTML="";
-
-  onValue(ref(db,`defenseTeams/${dk}/attackTeams`),snap=>{
-    attackList.innerHTML="";
-    const d=snap.val(); if(!d) return;
-    
-    Object.entries(d).forEach(([ak,av])=>{
-      const t=av.win+av.lose;
-      const r=t?Math.round(av.win/t*100):0;
-      
-      const b=document.createElement("button");
-      b.textContent=`${r>=70?"🔥 ":""}${av.name} ${r}% (${av.win}승 ${av.lose}패)`;
-      
-      b.onclick = () => {
-        // 버튼 스타일 초기화 (active 클래스 제어)
-        document
-          .querySelectorAll("#attackList button")
-          .forEach(btn => btn.classList.remove("active"));
-
-        b.classList.add("active"); // 선택된 버튼 강조
-        selectAttack(dk, ak);
-      };
-      
-      attackList.appendChild(b);
-    });
-  });
-};
-
-/* 최근 전적 로드 */
-async function loadRecentRecord(defenseKey, attackKey){
-  const snap = await get(ref(db,"logs"));
-  if(!snap.exists()) {
-    document.getElementById("recentRecord").innerHTML = "-";
-    return;
-  }
-
-  // 최신순 정렬
-  const logs = Object.values(snap.val())
-    .filter(v =>
-      v.defense === defenseKey &&
-      v.attack === attackKey
-    )
-    .sort((a,b)=>b.time-a.time)
-    .slice(0,5); // 최근 5판
-
-  let html = "";
-  logs.forEach(v=>{
-    if(v.result === "win") html += "🟢 ";
-    if(v.result === "lose") html += "🔴 ";
-  });
-
-  document.getElementById("recentRecord").innerHTML = html || "-";
-}
-
-/* 공격팀 선택 상세 로직 */
-window.selectAttack = (dk,ak) => {
-  currentAttack = ak; // 여기서 비로소 값이 들어감
-  
-  onValue(ref(db,`defenseTeams/${dk}/attackTeams/${ak}`),snap=>{
-    const d=snap.val(); if(!d) return;
-    
-    // 관리자용 값 채우기
-    if(win) win.textContent=d.win;
-    if(lose) lose.textContent=d.lose;
-    
-    const t=d.win+d.lose;
-    if(rate) rate.textContent=t?Math.round(d.win/t*100):0;
-
-    atkName.value=d.name;
-    atkType.value=d.type;
-    ringRec.value=d.ring;
-    armorRec.value=d.armor;
-    skillOrder.value=d.skill;
-
-    /* === 공격팀 요약 카드 표시 === */
-    attackCard.style.display = "block";
-
-    cardName.textContent = d.name;
-    cardWin.textContent = d.win;
-    cardLose.textContent = d.lose;
-
-    const total = d.win + d.lose;
-    cardTotal.textContent = total;
-
-    const rateVal = total ? Math.round(d.win / total * 100) : 0;
-    cardRate.textContent = rateVal;
-    cardFire.textContent = rateVal >= 70 ? "🔥" : "";
-
-    cardType.textContent = d.type || "-";
-    cardRing.textContent = d.ring || "-";
-    cardArmor.innerHTML = (d.armor || "-").replace(/\n/g,"<br>");
-    cardSkill.textContent = d.skill || "-";
-
-    loadRecentRecord(dk, ak);
-  });
-};
-
-/* 승리 버튼 */
 window.addWin = async () => {
-
-  // 공격팀 선택 여부 체크
-  if(!currentDefense || !currentAttack){
-    return alert("⚠️ 공격팀을 먼저 선택하세요.");
-  }
-
+  if(!currentDefense || !currentAttack) return alert("⚠️ 공격팀을 선택하세요.");
   if (!await canInput()) return alert("하루 최대 5회");
-
-  const defenseName =
-    defenseSelect.options[defenseSelect.selectedIndex]?.text.split(" (")[0] || "";
-  const attackName = document.getElementById("cardName")?.textContent || "";
-
-  if (
-    !confirm(
-      `『${defenseName}』을(를)\n『${attackName}』으로 공격하여\n【승리】한 것이 맞습니까?`
-    )
-  ) return;
-
-  // DB 업데이트
-  update(
-    ref(db, `defenseTeams/${currentDefense}/attackTeams/${currentAttack}`),
-    { win: +cardWin.textContent + 1 } // 화면 값 기준으로 +1 (실시간성 고려시 transaction이 좋으나 간단히 처리)
-  );
+  if (!confirm(`승리 기록을 저장할까요?`)) return;
+  const winEl = document.getElementById("cardWin");
+  update(ref(db, `defenseTeams/${currentDefense}/attackTeams/${currentAttack}`), { win: +winEl.textContent + 1 });
   writeLog("win");
 };
 
-/* 패배 버튼 */
 window.addLose = async () => {
-
-  if(!currentDefense || !currentAttack){
-    return alert("⚠️ 공격팀을 먼저 선택하세요.");
-  }
-
+  if(!currentDefense || !currentAttack) return alert("⚠️ 공격팀을 선택하세요.");
   if (!await canInput()) return alert("하루 최대 5회");
-
-  const defenseName =
-    defenseSelect.options[defenseSelect.selectedIndex]?.text.split(" (")[0] || "";
-  const attackName = document.getElementById("cardName")?.textContent || "";
-
-  if (
-    !confirm(
-      `『${defenseName}』을(를)\n『${attackName}』으로 공격하여\n【패배】한 것이 맞습니까?`
-    )
-  ) return;
-
-  update(
-    ref(db, `defenseTeams/${currentDefense}/attackTeams/${currentAttack}`),
-    { lose: +cardLose.textContent + 1 }
-  );
+  if (!confirm(`패배 기록을 저장할까요?`)) return;
+  const loseEl = document.getElementById("cardLose");
+  update(ref(db, `defenseTeams/${currentDefense}/attackTeams/${currentAttack}`), { lose: +loseEl.textContent + 1 });
   writeLog("lose");
 };
 
-/* 초기화 */
 window.resetRecord = () => {
   if(!checkPW()) return;
   if(!currentAttack) return alert("공격팀 선택 필요");
   update(ref(db,`defenseTeams/${currentDefense}/attackTeams/${currentAttack}`),{win:0,lose:0});
 };
 
-/* 관리자 CRUD */
-window.addDefense = ()=>{ if(checkPW()) set(push(ref(db,"defenseTeams")),{name:defName.value,attackTeams:{}}); };
+window.addDefense = ()=>{ 
+  if(checkPW()) set(push(ref(db,"defenseTeams")),{name:document.getElementById("defName").value, attackTeams:{}}); 
+};
 window.delDefense = ()=>{ if(checkPW()) remove(ref(db,"defenseTeams/"+currentDefense)); };
 
 window.addAttack = ()=>{
   if(!checkPW()) return;
   set(push(ref(db,`defenseTeams/${currentDefense}/attackTeams`)),{
-    name:atkName.value,
-    type:atkType.value,
-    ring:ringRec.value,
-    armor:armorRec.value,
-    skill:skillOrder.value,
-    win:0,lose:0
+    name: document.getElementById("atkName").value, 
+    type: document.getElementById("atkType").value, 
+    ring: document.getElementById("ringRec").value, 
+    armor: document.getElementById("armorRec").value, 
+    skill: document.getElementById("skillOrder").value, 
+    win:0, lose:0
   });
 };
 window.editAttack = ()=>{
-  if(!checkPW()) return;
-  if(!currentAttack) return alert("수정할 공격팀을 선택해주세요");
-  if(!confirm("정보가 변경됩니다.\n수정하시겠습니까?")) return;
+  if(!checkPW() || !currentAttack) return;
   update(ref(db,`defenseTeams/${currentDefense}/attackTeams/${currentAttack}`),{
-    name:atkName.value,
-    type:atkType.value,
-    ring:ringRec.value,
-    armor:armorRec.value,
-    skill:skillOrder.value
+    name: document.getElementById("atkName").value, 
+    type: document.getElementById("atkType").value, 
+    ring: document.getElementById("ringRec").value, 
+    armor: document.getElementById("armorRec").value, 
+    skill: document.getElementById("skillOrder").value
   });
+  alert("수정완료");
 };
 window.delAttack = ()=>{ 
-    if(!checkPW()) return;
-    if(!currentAttack) return alert("삭제할 공격팀을 선택해주세요");
-    remove(ref(db,`defenseTeams/${currentDefense}/attackTeams/${currentAttack}`));
+  if(checkPW() && currentAttack) remove(ref(db,`defenseTeams/${currentDefense}/attackTeams/${currentAttack}`)); 
 };
 
-/* 개인 랭킹 및 통계 */
+/* --- [복구됨] 유저 참여 현황(랭킹) 로직 --- */
 onValue(ref(db,"logs"), snap => {
-  if(!snap.exists()) return;
-
+  const rankingList = document.getElementById("rankingList");
+  rankingList.innerHTML = "";
+  
+  if(!snap.exists()) {
+    rankingList.innerHTML = "<div style='text-align:center; padding:10px; color:#555;'>아직 기록이 없습니다.</div>";
+    return;
+  }
+  
   const stat = {};
-
+  // 로그 집계
   Object.values(snap.val()).forEach(v=>{
-    if(!stat[v.nick]) stat[v.nick] = {w:0,l:0};
-
-    if(v.result === "win") stat[v.nick].w += 1;
-    if(v.result === "lose") stat[v.nick].l += 1;
-
-    // 관리자 조정값 반영
-    if(v.type === "win") stat[v.nick].w += v.delta;
-    if(v.type === "lose") stat[v.nick].l += v.delta;
+    if(!stat[v.nick]) stat[v.nick] = {w:0, l:0, total:0};
+    stat[v.nick].total++;
+    if(v.result === "win") stat[v.nick].w++;
+    else stat[v.nick].l++;
   });
-
-  const list = Object.entries(stat).map(([n,v])=>{
-    const t = v.w + v.l;
-    const r = t ? Math.round(v.w / t * 100) : 0;
-    return { n, w:v.w, l:v.l, r };
-  })
-  .sort((a,b)=>b.w - a.w);
-
-  /* 🏆 TOP3 */
-  rankBox.innerHTML = "<h4>🏆 승리 TOP3</h4>";
-
-  list.slice(0,3).forEach((u,i)=>{
-    const medal = ["🥇","🥈","🥉"][i];
-    const fire = u.r >= 70 ? " 🔥" : "";
-
-    const borderColor = [
-      "#f1c40f", // 🥇
-      "#bdc3c7", // 🥈
-      "#cd7f32"  // 🥉
-    ][i];
-
-    const glowClass =
-      i === 0 ? "rank-first" :
-      i === 1 ? "rank-second" :
-      i === 2 ? "rank-third" : "";
-
-    rankBox.innerHTML += `
-      <div class="${glowClass}" style="
-        border:2px solid ${borderColor};
-        border-radius:12px;
-        padding:10px;
-        margin-bottom:10px;
-        background:#111;
-      ">
-        <b>${medal} ${u.n}${fire}</b><br>
-        ${u.w}승 ${u.l}패<br>
-        승률 ${u.r}%
-      </div>
+  
+  // 참여 횟수(total) 순으로 정렬
+  const sorted = Object.entries(stat).sort((a,b) => b[1].total - a[1].total);
+  
+  sorted.forEach(([nick, val]) => {
+    const div = document.createElement("div");
+    div.className = "rank-item";
+    div.innerHTML = `
+      <span style="font-weight:bold; color:#fff;">${nick}</span>
+      <span style="color:#888;">${val.total}회 참여 (${val.w}승 ${val.l}패)</span>
     `;
-  });
-
-  /* 👤 내 카드 */
-  const myIndex = list.findIndex(v=>v.n === myNick);
-  if(myIndex !== -1){
-    const me = list[myIndex];
-    myCard.style.display = "block";
-    myNickCard.textContent = me.n;
-    myWL.textContent = `${me.w}승 ${me.l}패`;
-    myRate.textContent = me.r;
-    myRank.textContent = `${myIndex+1}위 / ${list.length}명`;
-  } else {
-    myCard.style.display = "none";
-  }
-});
-
-/* 👤 개인 프로필 카드 */
-onValue(ref(db, "logs"), async (snap) => {
-  if (!snap.exists() || !myNick) return;
-
-  let win = 0;
-  let lose = 0;
-
-  Object.values(snap.val()).forEach(v => {
-    if (v.nick !== myNick) return;
-    if (v.result === "win") win++;
-    if (v.result === "lose") lose++;
-    if (v.type === "win") win += v.delta;
-    if (v.type === "lose") lose += v.delta;
-  });
-
-  const total = win + lose;
-  const rate = total ? Math.round(win / total * 100) : 0;
-
-  profileNick.textContent = myNick;
-  profileWin.textContent = win;
-  profileLose.textContent = lose;
-  profileRate.textContent = rate;
-
-  /* 🔥 내 최근 5판 */
-  const recent = Object.values(snap.val())
-    .filter(v => v.nick === myNick && (v.result === "win" || v.result === "lose"))
-    .sort((a,b)=>b.time - a.time)
-    .slice(0,5);
-
-  let recentHtml = "";
-  recent.forEach(v=>{
-    if(v.result === "win") recentHtml += "🟢 ";
-    if(v.result === "lose") recentHtml += "🔴 ";
-  });
-
-  const recentEl = document.getElementById("myRecent");
-  if(recentEl){
-    recentEl.innerHTML = "최근 5판 : " + (recentHtml || "-");
-  }
-});
-
-/* 선호 공격팀 TOP3 */
-onValue(ref(db, "logs"), (snap) => {
-  if (!snap.exists() || !myNick) return;
-
-  const stats = {};
-  Object.values(snap.val()).forEach(v => {
-    if (v.nick !== myNick) return;
-    if (!v.attackName) return;
-
-    const key = v.attackName;
-    if (!stats[key]) {
-      stats[key] = { win: 0, lose: 0, type: v.attackType || "" };
-    }
-
-    if (v.result === "win") stats[key].win++;
-    if (v.result === "lose") stats[key].lose++;
-  });
-
-  const list = Object.entries(stats)
-    .map(([name, v]) => {
-      const t = v.win + v.lose;
-      const r = t ? Math.round(v.win / t * 100) : 0;
-      return { name, type: v.type, w: v.win, l: v.lose, r, t };
-    })
-    .filter(v => v.t >= 1)
-    .sort((a, b) => {
-      if (b.r !== a.r) return b.r - a.r;
-      return b.t - a.t;
-    })
-    .slice(0, 3);
-
-  profileFav.innerHTML = "";
-  if (list.length === 0) {
-    profileFav.innerHTML = "기록 없음";
-    return;
-  }
-  list.forEach((v, i) => {
-    profileFav.innerHTML += `${i+1}️⃣ ${v.type}-${v.name} ${v.r}% (${v.w}승${v.l}패)<br>`;
+    rankingList.appendChild(div);
   });
 });
-
-/* 관리자 로그 수정 */
-onValue(ref(db,"logs"), snap=>{
-  const sel = document.getElementById("adminNickSelect");
-  if(!sel || !snap.exists()) return;
-
-  sel.innerHTML = "";
-  const nicks = [...new Set(Object.values(snap.val()).map(v=>v.nick))];
-
-  nicks.forEach(n=>{
-    const o=document.createElement("option");
-    o.value=n;
-    o.textContent=n;
-    sel.appendChild(o);
-  });
-});
-
-window.adminLogAdjust = (type, delta) => {
-  if(!checkPW()) return;
-  const sel = document.getElementById("adminNickSelect");
-  if(!sel || !sel.value) return alert("닉네임 선택");
-  if(!confirm(`${sel.value} ${type} ${delta>0?"+1":"-1"} 하시겠습니까?`)) return;
-
-  set(push(ref(db,"logs")),{
-    nick: sel.value,
-    type: type,
-    delta: delta,
-    date: new Date().toISOString().slice(0,10),
-    time: Date.now(),
-    admin: true
-  });
-  alert("닉네임 로그 수정 완료");
-};
-
-window.adminDeleteUser = async () => {
-  if (!checkPW()) return;
-  const sel = document.getElementById("adminNickSelect");
-  if (!sel || !sel.value) return alert("닉네임을 선택하세요");
-  const targetNick = sel.value;
-
-  if (!confirm(`⚠ 정말로 [${targetNick}] 닉네임의 모든 로그를 삭제하시겠습니까?`)) return;
-
-  const snap = await get(ref(db, "logs"));
-  if (!snap.exists()) return alert("삭제할 로그가 없습니다");
-
-  const updates = {};
-  Object.entries(snap.val()).forEach(([key, val]) => {
-    if (val.nick === targetNick) updates[key] = null;
-  });
-
-  if (Object.keys(updates).length === 0) {
-    alert("해당 닉네임의 로그가 없습니다");
-    return;
-  }
-  await update(ref(db, "logs"), updates);
-  alert(`[${targetNick}] 유저 로그가 삭제되었습니다`);
-};
 
 </script>
-
-<style>
-body{background:#111;color:#fff;font-family:sans-serif;padding:12px}
-button,input,select,textarea{width:100%;margin-top:8px;padding:12px}
-.win{background:#4aa3ff}
-.lose{background:#ff5c5c}
-.adminBtn{background:#f1c40f;color:#000;font-weight:bold}
-.admin{display:none;border-top:2px solid #444;margin-top:20px;padding-top:15px}
-.footer{margin-top:30px;border:1px solid #555;padding:10px;text-align:center}
-.small{font-size:12px;color:#aaa}
-
-/* ⭐ 선택된 공격팀 강조 효과 */
-#attackList button.active {
-  background-color: #f1c40f; /* 노란색 강조 */
-  color: #000;
-  font-weight: bold;
-  border: 2px solid #fff;
-  transform: scale(1.02); /* 살짝 커짐 */
-  transition: all 0.2s;
-}
-
-/* 랭킹 효과 */
-.rank-first { animation: goldGlow 1.6s ease-in-out infinite; }
-.rank-second { animation: silverGlow 2s ease-in-out infinite; }
-.rank-third { animation: bronzeGlow 2s ease-in-out infinite; }
-
-@keyframes silverGlow {
-  0% { box-shadow: 0 0 4px rgba(189,195,199,0.4); }
-  50% { box-shadow: 0 0 12px rgba(189,195,199,0.85); }
-  100% { box-shadow: 0 0 4px rgba(189,195,199,0.4); }
-}
-@keyframes bronzeGlow {
-  0% { box-shadow: 0 0 4px rgba(205,127,50,0.4); }
-  50% { box-shadow: 0 0 12px rgba(205,127,50,0.85); }
-  100% { box-shadow: 0 0 4px rgba(205,127,50,0.4); }
-}
-@keyframes goldGlow {
-  0% { box-shadow: 0 0 4px rgba(241,196,15,0.4); }
-  50% { box-shadow: 0 0 14px rgba(241,196,15,0.9); }
-  100% { box-shadow: 0 0 4px rgba(241,196,15,0.4); }
-}
-
-#myCard { padding: 6px !important; font-size: 12px; line-height: 1.35; border-width: 2px; max-width: 210px; }
-#myCard h4 { margin: 0 0 4px 0; font-size: 13px; }
-#myCard div { margin-bottom: 3px; }
-#myRecent { margin-top: 4px; font-size: 12px; letter-spacing: 1px; }
-
-</style>
-</head>
-
-<body>
-
-<div id="loginScreen" style="display:none">
-<h2>🔥 화랑 길드전 사이트</h2>
-<input id="nickInput" placeholder="닉네임 입력">
-<div class="small">띄어쓰기없이,헷갈리지않게 적어주세요!</div>
-<button onclick="enterSite()">입장하기</button>
-</div>
-
-<div id="mainScreen">
-
-<div id="currentNick" style="position:fixed; top:10px; right:12px; font-size:13px; color:#f1c40f;"></div>
-
-<div id="profileCard" style="border:1px solid #444; padding:10px; border-radius:8px; margin:12px 0; background:#000; font-size:13px;">
-  <div style="font-weight:bold;margin-bottom:6px">👤 프로필</div>
-  <div>현재 접속중 닉네임 : <b id="profileNick"></b></div>
-  <div>이번 시즌 전적 : <b><span id="profileRate">0</span>%</b> (<span id="profileWin">0</span>승 <span id="profileLose">0</span>패)</div>
-  <div style="margin-top:6px">선호 공격팀 :</div>
-  <div id="profileFav" style="margin-left:8px"></div>
-</div>
-
-<h3>🎯 공격할 대상 선택</h3>
-<select id="defenseSelect" onchange="loadAttackTeams(this.value)">
-  <option value="" disabled selected>방어팀 선택</option>
-</select>
-
-<h3>⚔ 공격팀 목록</h3>
-<div id="attackList"></div>
-
-<div id="attackCard" style="display:none; border:2px solid #444; padding:14px; margin:12px 0; border-radius:8px; background:#000;">
-  <div style="font-size:18px;font-weight:bold;margin-bottom:6px">
-    ⚔ 공격팀 : <span id="cardName"></span>
-  </div>
-  <div>승률 : <span id="cardRate"></span>% <span id="cardFire" style="color:#ff6b6b"></span></div>
-  <div>전적 : <span id="cardWin"></span>승 / <span id="cardLose"></span>패 (<span id="cardTotal"></span>판)</div>
-  <div style="margin-top:6px">최근 전적 : <span id="recentRecord"></span></div>
-  <hr style="border-color:#333;margin:10px 0">
-  <div>▶ 추천 타입 : <b><span id="cardType"></span></b></div>
-  <div>▶ 반지 추천<br><span id="cardRing"></span></div>
-  <div>▶ 방어구 추천<br><span id="cardArmor"></span></div>
-  <div>▶ 스킬 순서<br><span id="cardSkill"></span></div>
-</div>
-
-<h3>📊 전적 입력</h3>
-<button class="win" onclick="addWin()">승리 입력</button>
-<button class="lose" onclick="addLose()">패배 입력</button>
-<div class="small"><a href="#" onclick="resetRecord()">승/패 초기화 (관리자)</a></div>
-<div style="display:none">승 <span id="win">0</span> / 패 <span id="lose">0</span> / 승률 <span id="rate">0</span>%</div>
-
-<h3>🏆 개인 전적</h3>
-<div style="display:flex; gap:12px; flex-wrap:wrap">
-  <div id="rankBox" style="flex:1"></div>
-  <div id="myCard" style="flex:1; border:2px solid #ff4d4d; border-radius:10px; padding:8px; background:#000; display:none; font-size:13px;">
-    <h4 style="margin:4px 0;font-size:14px">👤 내 전적</h4>
-    <div>닉네임 : <b id="myNickCard"></b></div>
-    <div>전적 : <span id="myWL"></span></div>
-    <div>승률 : <span id="myRate"></span>%</div>
-    <div>내 등수 : <b><span id="myRank"></span></b></div>
-    <div id="myRecent">최근 5판 : -</div>
-  </div>
-</div>
-
-<button id="adminBtn" class="adminBtn" onclick="toggleAdmin()">+ 관리자용</button>
-
-<div id="adminPanel" class="admin">
-  <input id="defName" placeholder="방어팀 이름">
-  <button onclick="addDefense()">방어팀 추가</button>
-  <button onclick="delDefense()">방어팀 삭제</button>
-  
-  <input id="atkName" placeholder="공격팀 이름">
-  <select id="atkType"><option>속공</option><option>내실</option></select>
-  <input id="ringRec" placeholder="반지 추천">
-  <textarea id="armorRec" placeholder="방어구 추천"></textarea>
-  <input id="skillOrder" placeholder="스킬 순서">
-  <button onclick="addAttack()">공격팀 추가</button>
-  <button onclick="editAttack()">공격팀 수정</button>
-  <button onclick="delAttack()">공격팀 삭제</button>
-
-  <h4>📌 닉네임별 승/패 로그 수정</h4>
-  <select id="adminNickSelect"></select>
-  <button onclick="adminLogAdjust('win',1)">승 +1</button>
-  <button onclick="adminLogAdjust('win',-1)">승 -1</button>
-  <button onclick="adminLogAdjust('lose',1)">패 +1</button>
-  <button onclick="adminLogAdjust('lose',-1)">패 -1</button>
-  <hr style="margin:10px 0;border-color:#333">
-  <button style="background:#ff4d4d;color:#fff;font-weight:bold" onclick="adminDeleteUser()">❌ 선택한 유저 로그 전체 삭제</button>
-</div>
-
-<hr style="margin:15px 0;border-color:#333">
-<div class="footer">제작자 : 불멸</div>
-
-</div>
 </body>
 </html>
