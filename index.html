@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>🔥 화랑 길드전 (User Stat Edition)</title>
+<title>🔥 화랑 길드전 (Final)</title>
 <style>
   /* --- [스타일] Glassmorphism (유리 모피즘) & Dark UI --- */
   :root {
@@ -282,7 +282,6 @@ window.enterSite = () => {
   document.getElementById("loginScreen").style.display = "none";
   document.getElementById("mainScreen").style.display = "block";
   document.getElementById("currentNick").textContent = `닉네임 : ${myNick}`;
-  // 닉네임 설정 직후에도 랭킹 리프레시를 위해 한 번 호출할 수 있으나, onValue가 곧 돌아서 처리됨
 };
 
 function checkPW(){
@@ -318,7 +317,7 @@ window.addEventListener('click', (e) => {
   }
 });
 
-/* 방어팀 목록 */
+/* 방어팀 목록 (드롭다운) - 문구 수정됨 */
 onValue(ref(db,"defenseTeams"), snap => {
   const listDiv = document.getElementById("defListDropdown");
   listDiv.innerHTML = "";
@@ -333,7 +332,8 @@ onValue(ref(db,"defenseTeams"), snap => {
     
     const div = document.createElement("div");
     div.className = "dropdown-item";
-    div.innerHTML = `<b>${v.name}</b><small>방어 성공률 ${rate}% (${tWins}승 ${tLose}패)</small>`;
+    /* [수정] 방어 성공률 -> 공격 성공률 */
+    div.innerHTML = `<b>${v.name}</b><small>공격 성공률 ${rate}% (${tWins}승 ${tLose}패)</small>`;
     div.onclick = () => {
       document.getElementById("defCurrentText").innerHTML = `${v.name} <span style="font-size:0.8em; color:#888;">(${rate}%)</span>`;
       document.getElementById("defListDropdown").style.display = "none";
@@ -516,7 +516,7 @@ function renderRanking() {
     const [nick, val] = sorted[myRankIndex];
     const rate = val.total ? Math.round(val.w / val.total * 100) : 0;
     myStatDiv.innerHTML = `내 전적: ${myRankIndex + 1}위 / ${val.w}승 ${val.l}패 (승률 ${rate}%)`;
-    myStatDiv.style.color = "#4facfe"; // 내 정보 강조색
+    myStatDiv.style.color = "#4facfe"; 
   } else {
     myStatDiv.innerHTML = "내 전적: 아직 기록이 없습니다";
     myStatDiv.style.color = "#888";
@@ -535,16 +535,20 @@ function renderRanking() {
     else if(index === 2) { badge = "🥉"; nickStyle = "color:#CD7F32; font-weight:bold;"; }
     else { badge = `<span style='width:20px; display:inline-block; text-align:center; color:#666;'>${index+1}</span>`; }
 
+    /* [수정] 랭킹 리스트에 승률(%) 표시 추가 */
+    const total = val.w + val.l;
+    const winRate = total ? Math.round(val.w / total * 100) : 0;
+
     const div = document.createElement("div");
     div.className = "rank-row";
-    if(adminOpen && index >= 10) div.style.background = "rgba(255,0,0,0.05)"; // 관리자 모드 숨김 유저 표시
+    if(adminOpen && index >= 10) div.style.background = "rgba(255,0,0,0.05)"; 
 
     div.innerHTML = `
       <div style="display:flex; align-items:center; gap:8px;">
         ${badge} <span style="${nickStyle}">${nick}</span>
       </div>
       <span style="color:#888; font-size:0.85rem;">
-        <span style="color:${val.w>0?'#4caf50':'#666'}">${val.w}승</span> / ${val.l}패
+        <span style="color:${val.w>0?'#4caf50':'#666'}">${val.w}승</span> / ${val.l}패 (${winRate}%)
       </span>
     `;
     rankingList.appendChild(div);
@@ -554,9 +558,8 @@ function renderRanking() {
   else msg.style.display = "none";
 }
 
-/* 관리자: 유저 승패 수정 (비밀번호 확인 제거됨) */
+/* 관리자: 유저 승패 수정 */
 window.adjustScore = async (nick, type, delta) => {
-  // 관리자 모드(adminOpen)가 아니라면 막을 수도 있지만, 편의상 패널 열려있으면 허용
   if(delta === 1) {
     set(push(ref(db,"logs")),{
       nick: nick, result: type, defense: "admin", attack: "manual_adjust",
