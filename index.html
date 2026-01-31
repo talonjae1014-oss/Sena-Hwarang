@@ -87,12 +87,39 @@ async function canInput(){
 }
 
 /* 로그 */
-function writeLog(result){
+
+async function writeLog(result){
+
+  // 🔒 안전장치 추가
+  if(!currentDefense || !currentAttack){
+    alert("⚠️ 방어팀 / 공격팀 선택 오류. 다시 선택해주세요.");
+    return;
+  }
+
+  // DB에서 공격덱 정보 직접 읽기
+  const snap = await get(
+    ref(db, `defenseTeams/${currentDefense}/attackTeams/${currentAttack}`)
+  );
+
+  if(!snap.exists()) return;
+
+  const atk = snap.val();
+
+if(!atk || !atk.name){
+  alert("⚠️ 공격팀 정보 오류. 다시 선택해주세요.");
+  return;
+}
+
   set(push(ref(db,"logs")),{
     nick: myNick,
     result,
     defense: currentDefense,
     attack: currentAttack,
+
+    // ⭐ 이름/타입 확실히 저장
+    attackName: atk.name || "",
+    attackType: atk.type || "",
+
     date: new Date().toISOString().slice(0,10),
     time: Date.now()
   });
@@ -204,6 +231,11 @@ loadRecentRecord(dk, ak);
 /* 승/패 */
 
 window.addWin = async () => {
+
+  if(!currentDefense || !currentAttack){
+    return alert("⚠️ 공격팀을 먼저 선택하세요.");
+  }
+
   if (!currentAttack) return;
   if (!await canInput()) return alert("하루 최대 5회");
 
@@ -225,6 +257,11 @@ window.addWin = async () => {
 };
 
 window.addLose = async () => {
+
+  if(!currentDefense || !currentAttack){
+    return alert("⚠️ 공격팀을 먼저 선택하세요.");
+  }
+
   if (!currentAttack) return;
   if (!await canInput()) return alert("하루 최대 5회");
 
@@ -396,36 +433,61 @@ onValue(ref(db, "logs"), async (snap) => {
   }
 });
 
-/* 선호 공격팀 TOP3 */
-onValue(ref(db, "defenseTeams"), (snap) => {
-  if (!snap.exists()) return;
+/* 선호 공격팀 TOP3 (이름 기준) */
+onValue(ref(db, "logs"), (snap) => {
+  if (!snap.exists() || !myNick) return;
 
   const stats = {};
 
-  Object.values(snap.val()).forEach(def => {
-    Object.values(def.attackTeams || {}).forEach(atk => {
-      const total = atk.win + atk.lose;
-      if (total < 3) return; // 표본 너무 적은 건 제외
+  Object.values(snap.val()).forEach(v => {
+    if (v.nick !== myNick) return;
+    if (!v.attackName) return; // 이전 로그 제외
 
-      const rate = Math.round(atk.win / total * 100);
-      stats[atk.name] = {
-        name: atk.name,
-        type: atk.type || "",
-        rate
+    const key = v.attackName;
+
+    if (!stats[key]) {
+      stats[key] = {
+        win: 0,
+        lose: 0,
+        type: v.attackType || ""
       };
-    });
+    }
+
+    if (v.result === "win") stats[key].win++;
+    if (v.result === "lose") stats[key].lose++;
   });
 
-  const top = Object.values(stats)
-    .sort((a, b) => b.rate - a.rate)
+  const list = Object.entries(stats)
+    .map(([name, v]) => {
+      const t = v.win + v.lose;
+      const r = t ? Math.round(v.win / t * 100) : 0;
+
+      return {
+        name,
+        type: v.type,
+        w: v.win,
+        l: v.lose,
+        r,
+        t
+      };
+    })
+    .filter(v => v.t >= 1)
+    .sort((a, b) => {
+      if (b.r !== a.r) return b.r - a.r;
+      return b.t - a.t;
+    })
     .slice(0, 3);
 
   profileFav.innerHTML = "";
-  ["1️⃣", "2️⃣", "3️⃣"].forEach((m, i) => {
-    if (top[i]) {
-      profileFav.innerHTML +=
-        `${m} ${top[i].type}-${top[i].name} (${top[i].rate}%)<br>`;
-    }
+
+  if (list.length === 0) {
+    profileFav.innerHTML = "기록 없음";
+    return;
+  }
+
+  list.forEach((v, i) => {
+    profileFav.innerHTML +=
+      `${i+1}️⃣ ${v.type}-${v.name} ${v.r}% (${v.w}승${v.l}패)<br>`;
   });
 });
 
@@ -641,7 +703,9 @@ color:#f1c40f;
 </div>
 
 <h3>🎯 공격할 대상 선택</h3>
-<select id="defenseSelect" onchange="loadAttackTeams(this.value)"></select>
+<select id="defenseSelect" onchange="loadAttackTeams(this.value)">
+  <option value="" disabled selected>방어팀 선택</option>
+</select>
 
 <h3>⚔ 공격팀 목록</h3>
 <div id="attackList"></div>
@@ -760,3 +824,4 @@ color:#f1c40f;
 </div>
 </body>
 </html>
+
