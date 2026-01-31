@@ -3,14 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>🔥 화랑 길드전 (Glass Edition)</title>
+<title>🔥 화랑 길드전 (User Stat Edition)</title>
 <style>
   /* --- [스타일] Glassmorphism (유리 모피즘) & Dark UI --- */
   :root {
     --bg-color: #050505;
     --text-main: #f0f0f0;
     --text-sub: #a0a0a0;
-    --accent: #4facfe; /* 하늘색 포인트 */
+    --accent: #4facfe;
     
     /* 유리 효과 변수 */
     --glass-bg: rgba(255, 255, 255, 0.03);
@@ -121,8 +121,6 @@
     background: #151515; border: 1px solid #444;
     padding: 20px; border-radius: 12px; margin-top: 30px; display: none;
   }
-  
-  /* 유저 관리 버튼 (작은 사이즈) */
   .mini-btn { padding: 4px 8px; font-size: 0.8rem; margin-left: 2px; }
   .bg-blue { background: #0d6efd; color: #fff; }
   .bg-red { background: #dc3545; color: #fff; }
@@ -145,9 +143,12 @@
 
 <div id="mainScreen" style="display:none; max-width: 600px; margin: 0 auto;">
   
-  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-    <span id="currentNick" style="color:var(--accent); font-weight:bold;"></span>
-    <button onclick="toggleAdmin()" id="adminBtn" style="background:#333; color:#fff; font-size:0.8rem;">+ 관리자</button>
+  <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:20px;">
+    <div>
+      <div id="currentNick" style="color:var(--accent); font-weight:bold; font-size:1.1rem; margin-bottom:4px;"></div>
+      <div id="myStats" style="color:#aaa; font-size:0.85rem;">내 전적 불러오는 중...</div>
+    </div>
+    <button onclick="toggleAdmin()" id="adminBtn" style="background:#333; color:#fff; font-size:0.8rem; padding:6px 12px;">+ 관리자</button>
   </div>
 
   <div class="dropdown-wrapper">
@@ -259,7 +260,7 @@ let myNick = "";
 let currentDefense = "";
 let currentAttack = "";
 let adminOpen = false;
-let allLogsCache = []; // 로그 데이터 저장용
+let allLogsCache = []; 
 
 window.onload = () => {
   myNick = localStorage.getItem("nickname");
@@ -269,7 +270,7 @@ window.onload = () => {
   } else {
     document.getElementById("loginScreen").style.display = "none";
     document.getElementById("mainScreen").style.display = "block";
-    document.getElementById("currentNick").textContent = `사령관 : ${myNick}`;
+    document.getElementById("currentNick").textContent = `닉네임 : ${myNick}`;
   }
 };
 
@@ -280,7 +281,8 @@ window.enterSite = () => {
   localStorage.setItem("nickname", myNick);
   document.getElementById("loginScreen").style.display = "none";
   document.getElementById("mainScreen").style.display = "block";
-  document.getElementById("currentNick").textContent = `사령관 : ${myNick}`; 
+  document.getElementById("currentNick").textContent = `닉네임 : ${myNick}`;
+  // 닉네임 설정 직후에도 랭킹 리프레시를 위해 한 번 호출할 수 있으나, onValue가 곧 돌아서 처리됨
 };
 
 function checkPW(){
@@ -302,12 +304,10 @@ window.toggleAdmin = () => {
     btn.textContent="+ 관리자";
     adminOpen=false;
   }
-  // 관리자 모드 전환 시 랭킹 리스트 다시 그리기 (숨겨진 순위 표시/숨김 처리)
   renderRanking();
-  renderAdminUserList(); // 유저 수정 리스트 렌더링
+  renderAdminUserList(); 
 };
 
-/* 드롭다운 제어 */
 window.toggleDropdown = () => {
   const list = document.getElementById("defListDropdown");
   list.style.display = (list.style.display === "block") ? "none" : "block";
@@ -453,7 +453,6 @@ window.addLose = async () => {
   writeLog("lose");
 };
 
-/* 관리자: CRUD 및 리셋 */
 window.resetRecord = () => {
   if(!checkPW()) return;
   if(!currentAttack) return alert("공격팀 선택 필요");
@@ -482,12 +481,12 @@ window.delAttack = ()=>{ if(checkPW() && currentAttack) remove(ref(db,`defenseTe
 
 /* --- 랭킹 및 유저 관리 로직 --- */
 onValue(ref(db,"logs"), snap => {
-  allLogsCache = snap.val() || {}; // 로그 캐싱
+  allLogsCache = snap.val() || {}; 
   renderRanking();
   if(adminOpen) renderAdminUserList();
 });
 
-// 랭킹 렌더링 (adminOpen에 따라 10위 제한)
+// 랭킹 렌더링
 function renderRanking() {
   const rankingList = document.getElementById("rankingList");
   const msg = document.getElementById("moreRankMsg");
@@ -495,6 +494,7 @@ function renderRanking() {
   
   if(!Object.keys(allLogsCache).length) {
     rankingList.innerHTML = "<div style='text-align:center; padding:10px; color:#555;'>기록 없음</div>";
+    document.getElementById("myStats").textContent = "내 전적: 기록 없음";
     return;
   }
   
@@ -506,17 +506,26 @@ function renderRanking() {
     else stat[v.nick].l++;
   });
   
-  // 승리(Win) 순으로 정렬
   const sorted = Object.entries(stat).sort((a,b) => b[1].w - a[1].w);
   
-  let hiddenCount = 0;
+  // --- [내 전적 계산] ---
+  const myRankIndex = sorted.findIndex(([nick]) => nick === myNick);
+  const myStatDiv = document.getElementById("myStats");
+  
+  if(myRankIndex !== -1) {
+    const [nick, val] = sorted[myRankIndex];
+    const rate = val.total ? Math.round(val.w / val.total * 100) : 0;
+    myStatDiv.innerHTML = `내 전적: ${myRankIndex + 1}위 / ${val.w}승 ${val.l}패 (승률 ${rate}%)`;
+    myStatDiv.style.color = "#4facfe"; // 내 정보 강조색
+  } else {
+    myStatDiv.innerHTML = "내 전적: 아직 기록이 없습니다";
+    myStatDiv.style.color = "#888";
+  }
 
+  // --- [리스트 렌더링] ---
+  let hiddenCount = 0;
   sorted.forEach(([nick, val], index) => {
-    // 관리자가 아니고 10등 밖이면 숨김
-    if(!adminOpen && index >= 10) {
-      hiddenCount++;
-      return;
-    }
+    if(!adminOpen && index >= 10) { hiddenCount++; return; }
 
     let badge = "";
     let nickStyle = "color:#fff; font-weight:bold;";
@@ -528,8 +537,7 @@ function renderRanking() {
 
     const div = document.createElement("div");
     div.className = "rank-row";
-    // 관리자일 경우 구분을 위해 배경색 살짝 다르게
-    if(adminOpen && index >= 10) div.style.background = "rgba(255,0,0,0.05)";
+    if(adminOpen && index >= 10) div.style.background = "rgba(255,0,0,0.05)"; // 관리자 모드 숨김 유저 표시
 
     div.innerHTML = `
       <div style="display:flex; align-items:center; gap:8px;">
@@ -546,37 +554,30 @@ function renderRanking() {
   else msg.style.display = "none";
 }
 
-/* 관리자: 유저 승패 수정 기능 */
+/* 관리자: 유저 승패 수정 (비밀번호 확인 제거됨) */
 window.adjustScore = async (nick, type, delta) => {
-  if(!checkPW()) return;
-  
+  // 관리자 모드(adminOpen)가 아니라면 막을 수도 있지만, 편의상 패널 열려있으면 허용
   if(delta === 1) {
-    // 추가 (+): 가짜 로그 추가
     set(push(ref(db,"logs")),{
       nick: nick, result: type, defense: "admin", attack: "manual_adjust",
       attackName: "관리자수정", attackType: "",
       date: new Date().toISOString().slice(0,10), time: Date.now()
     });
   } else {
-    // 감소 (-): 해당 유저의 가장 최근 해당 결과 로그 1개 삭제
-    // 캐시된 로그 사용하면 꼬일 수 있으니 실시간 조회
     const snap = await get(ref(db, "logs"));
-    if(!snap.exists()) return alert("기록이 없습니다.");
+    if(!snap.exists()) return alert("기록 없음");
     
     const logs = Object.entries(snap.val())
       .map(([k,v]) => ({...v, key:k}))
       .filter(v => v.nick === nick && v.result === type)
-      .sort((a,b) => b.time - a.time); // 최신순 정렬
+      .sort((a,b) => b.time - a.time);
       
     if(logs.length === 0) return alert("차감할 기록이 없습니다.");
-    
-    // 가장 최근 기록 삭제
     await remove(ref(db, `logs/${logs[0].key}`));
   }
-  alert("처리되었습니다.");
 };
 
-/* 관리자 패널용 유저 리스트 생성 */
+/* 관리자용 유저 리스트 */
 function renderAdminUserList() {
   const listDiv = document.getElementById("adminUserList");
   listDiv.innerHTML = "";
@@ -588,9 +589,7 @@ function renderAdminUserList() {
     else stat[v.nick].l++;
   });
 
-  // 이름순 정렬
   const sorted = Object.keys(stat).sort();
-  
   sorted.forEach(nick => {
     const val = stat[nick];
     const div = document.createElement("div");
@@ -614,7 +613,6 @@ function renderAdminUserList() {
     listDiv.appendChild(div);
   });
 }
-
 </script>
 </body>
 </html>
