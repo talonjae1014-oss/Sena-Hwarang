@@ -3,16 +3,15 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>🔥 화랑 길드전 (Final)</title>
+<title>🔥 화랑 길드전 (Final + 제보기능)</title>
 <style>
-  /* --- [스타일] Glassmorphism (유리 모피즘) & Dark UI --- */
+  /* --- [스타일] Glassmorphism & Dark UI --- */
   :root {
     --bg-color: #050505;
     --text-main: #f0f0f0;
     --text-sub: #a0a0a0;
     --accent: #4facfe;
     
-    /* 유리 효과 변수 */
     --glass-bg: rgba(255, 255, 255, 0.03);
     --glass-border: rgba(255, 255, 255, 0.1);
     --glass-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
@@ -23,47 +22,32 @@
     background-color: var(--bg-color);
     color: var(--text-main);
     font-family: 'Suit', sans-serif;
-    margin: 0;
-    padding: 20px;
-    padding-bottom: 100px;
+    margin: 0; padding: 20px; padding-bottom: 100px;
   }
 
   h2, h3, h4 { margin-top: 0; color: #fff; font-weight: 700; }
   
-  /* 공통 버튼 & 입력창 */
   button {
     cursor: pointer; border: none; padding: 10px 15px; border-radius: 8px;
     font-weight: bold; transition: 0.2s;
   }
   input, select, textarea {
     background: rgba(30, 30, 30, 0.8);
-    border: 1px solid #444;
-    color: #fff;
-    padding: 12px;
-    border-radius: 8px;
-    width: 100%;
-    box-sizing: border-box;
-    margin-bottom: 8px;
+    border: 1px solid #444; color: #fff;
+    padding: 12px; border-radius: 8px; width: 100%;
+    box-sizing: border-box; margin-bottom: 8px;
   }
 
-  /* --- 드롭다운 (방어팀 선택) --- */
+  /* 드롭다운 */
   .dropdown-wrapper { position: relative; margin-bottom: 25px; z-index: 100; }
-  
   .glass-box {
-    background: var(--glass-bg);
-    border: 1px solid var(--glass-border);
-    border-radius: 12px;
-    padding: 18px;
-    backdrop-filter: var(--glass-blur);
-    box-shadow: var(--glass-shadow);
+    background: var(--glass-bg); border: 1px solid var(--glass-border);
+    border-radius: 12px; padding: 18px;
+    backdrop-filter: var(--glass-blur); box-shadow: var(--glass-shadow);
     display: flex; justify-content: space-between; align-items: center;
     cursor: pointer; transition: 0.3s;
   }
-  .glass-box:hover {
-    background: rgba(255, 255, 255, 0.07);
-    border-color: rgba(255, 255, 255, 0.3);
-  }
-
+  .glass-box:hover { background: rgba(255, 255, 255, 0.07); border-color: rgba(255, 255, 255, 0.3); }
   .dropdown-list {
     display: none; position: absolute; top: 100%; left: 0; width: 100%;
     background: #0f0f0f; border: 1px solid #333; border-radius: 12px;
@@ -73,7 +57,7 @@
   .dropdown-item { padding: 15px; border-bottom: 1px solid #222; cursor: pointer; }
   .dropdown-item:hover { background: #222; color: var(--accent); }
 
-  /* --- 공격팀 리스트 (그리드) --- */
+  /* 공격팀 리스트 */
   #attackList {
     display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
     gap: 12px; margin-bottom: 20px;
@@ -85,12 +69,11 @@
     display: flex; flex-direction: column; justify-content: center; align-items: center;
   }
   .attack-btn.active {
-    background: rgba(79, 172, 254, 0.1);
-    border: 1px solid var(--accent);
+    background: rgba(79, 172, 254, 0.1); border: 1px solid var(--accent);
     color: #fff; box-shadow: 0 0 15px rgba(79, 172, 254, 0.2);
   }
 
-  /* --- 상세 정보 카드 --- */
+  /* 상세 정보 카드 */
   #attackCard {
     background: rgba(20, 20, 20, 0.9); border: 1px solid #444;
     border-radius: 12px; padding: 20px; display: none;
@@ -99,24 +82,16 @@
   .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 15px 0; }
   .info-item { background: #222; padding: 10px; border-radius: 6px; font-size: 0.9rem; }
   .info-label { display: block; color: #888; font-size: 0.75rem; margin-bottom: 4px; }
-
-  /* 승패 버튼 */
   .btn-win { background: #198754; color: #fff; width: 48%; padding: 15px; }
   .btn-lose { background: #dc3545; color: #fff; width: 48%; padding: 15px; }
 
-  /* --- 랭킹 리스트 --- */
+  /* 랭킹 리스트 */
   .rank-row {
     display: flex; justify-content: space-between; align-items: center;
     padding: 12px; border-bottom: 1px solid #222; font-size: 0.95rem;
   }
-  .rank-row:last-child { border-bottom: none; }
   
-  /* 메달 색상 */
-  .rank-gold { color: #FFD700; text-shadow: 0 0 10px rgba(255, 215, 0, 0.3); }
-  .rank-silver { color: #C0C0C0; text-shadow: 0 0 10px rgba(192, 192, 192, 0.3); }
-  .rank-bronze { color: #CD7F32; text-shadow: 0 0 10px rgba(205, 127, 50, 0.3); }
-
-  /* --- 관리자 패널 --- */
+  /* 관리자 패널 */
   #adminPanel {
     background: #151515; border: 1px solid #444;
     padding: 20px; border-radius: 12px; margin-top: 30px; display: none;
@@ -124,7 +99,23 @@
   .mini-btn { padding: 4px 8px; font-size: 0.8rem; margin-left: 2px; }
   .bg-blue { background: #0d6efd; color: #fff; }
   .bg-red { background: #dc3545; color: #fff; }
-  
+
+  /* 제보 모달 (Modal) 추가됨 */
+  #suggestModal {
+    display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.8); z-index: 2000;
+    align-items: center; justify-content: center;
+  }
+  .modal-content {
+    background: #1a1a1a; padding: 20px; border-radius: 12px;
+    width: 90%; max-width: 400px; border: 1px solid #444;
+  }
+
+  /* 제보 리스트 아이템 */
+  .suggest-item {
+    background: #222; padding: 10px; margin-bottom: 8px; border-radius: 6px; border: 1px solid #333;
+  }
+
   footer {
     text-align: center; margin-top: 50px; padding: 20px;
     color: #555; font-size: 0.8rem; border-top: 1px solid #111;
@@ -162,12 +153,19 @@
 
   <div id="attackList"></div>
 
+  <div id="suggestBtnArea" style="text-align:center; margin-bottom:20px; display:none;">
+    <button onclick="openSuggestModal()" style="background:transparent; border:1px dashed #555; color:#888; width:100%;">
+      + 공격덱 제보하기 (유저 참여)
+    </button>
+  </div>
+
   <div id="attackCard">
     <h2 style="border-bottom:1px solid #444; padding-bottom:10px; margin-bottom:10px;">
       <span id="cardFire"></span> <span id="cardName"></span>
       <span style="float:right; font-size:0.6em; color:#888; font-weight:normal;">
         승률 <span id="cardRate" style="color:#fff; font-size:1.4em; font-weight:bold;">0</span>%
       </span>
+      <div id="cardMaker" style="font-size:0.4em; color:var(--accent); font-weight:normal; margin-top:5px;"></div>
     </h2>
 
     <div class="info-grid">
@@ -204,6 +202,11 @@
   <div id="adminPanel">
     <h3>🛠️ 데이터 관리</h3>
     
+    <div style="background:#221a1a; padding:10px; border-radius:8px; border:1px solid #633; margin-bottom:20px;">
+      <h4 style="color:#ffaaaa;">🔔 대기 중인 제보</h4>
+      <div id="suggestionList" style="color:#888; font-size:0.9rem;">(제보된 덱이 없습니다)</div>
+    </div>
+
     <div style="margin-bottom:20px;">
       <h4>방어팀 관리</h4>
       <input type="text" id="defName" placeholder="새 방어팀 이름">
@@ -238,6 +241,22 @@
   </footer>
 </div>
 
+<div id="suggestModal">
+  <div class="modal-content">
+    <h3>💡 공격덱 제보</h3>
+    <p style="color:#aaa; font-size:0.8rem; margin-bottom:15px;">관리자 승인 후 리스트에 등록됩니다.</p>
+    <input type="text" id="sugName" placeholder="공격팀 이름 (필수)">
+    <input type="text" id="sugType" placeholder="타입 (만능형 등)">
+    <input type="text" id="sugRing" placeholder="진형/펫">
+    <textarea id="sugArmor" rows="2" placeholder="영웅/장비/특이사항"></textarea>
+    <input type="text" id="sugSkill" placeholder="스킬 순서">
+    <div style="display:flex; gap:10px; margin-top:10px;">
+      <button onclick="submitSuggestion()" style="flex:1; background:var(--accent); color:#000;">제보하기</button>
+      <button onclick="closeSuggestModal()" style="flex:1; background:#333; color:#fff;">취소</button>
+    </div>
+  </div>
+</div>
+
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
 import { getDatabase, ref, onValue, update, push, set, get, remove } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
@@ -261,6 +280,7 @@ let currentDefense = "";
 let currentAttack = "";
 let adminOpen = false;
 let allLogsCache = []; 
+let defenseDataCache = {}; // 방어팀 데이터 캐시 추가
 
 window.onload = () => {
   myNick = localStorage.getItem("nickname");
@@ -305,6 +325,7 @@ window.toggleAdmin = () => {
   }
   renderRanking();
   renderAdminUserList(); 
+  renderSuggestions(); // 관리자 열 때 제보 리스트 갱신
 };
 
 window.toggleDropdown = () => {
@@ -317,22 +338,22 @@ window.addEventListener('click', (e) => {
   }
 });
 
-/* 방어팀 목록 (드롭다운) - 문구 수정됨 */
+/* 방어팀 목록 (드롭다운) */
 onValue(ref(db,"defenseTeams"), snap => {
   const listDiv = document.getElementById("defListDropdown");
   listDiv.innerHTML = "";
-  const d = snap.val();
-  if(!d) {
+  defenseDataCache = snap.val() || {}; // 데이터 캐싱
+  
+  if(!defenseDataCache) {
     document.getElementById("defCurrentText").textContent = "데이터 없음"; return;
   }
-  Object.entries(d).forEach(([k, v]) => {
+  Object.entries(defenseDataCache).forEach(([k, v]) => {
     const tWins = Object.values(v.attackTeams||{}).reduce((a,b)=>a+(b.win||0),0);
     const tLose = Object.values(v.attackTeams||{}).reduce((a,b)=>a+(b.lose||0),0);
     const rate = (tWins+tLose) ? Math.round(tWins/(tWins+tLose)*100) : 0;
     
     const div = document.createElement("div");
     div.className = "dropdown-item";
-    /* [수정] 방어 성공률 -> 공격 성공률 */
     div.innerHTML = `<b>${v.name}</b><small>공격 성공률 ${rate}% (${tWins}승 ${tLose}패)</small>`;
     div.onclick = () => {
       document.getElementById("defCurrentText").innerHTML = `${v.name} <span style="font-size:0.8em; color:#888;">(${rate}%)</span>`;
@@ -347,6 +368,9 @@ window.loadAttackTeams = (dk) => {
   currentDefense = dk;
   currentAttack = ""; 
   document.getElementById("attackCard").style.display = "none";
+  // [추가됨] 방어팀 선택 시 제보 버튼 표시
+  document.getElementById("suggestBtnArea").style.display = "block";
+  
   const attackList = document.getElementById("attackList");
   attackList.innerHTML="";
 
@@ -370,6 +394,85 @@ window.loadAttackTeams = (dk) => {
       attackList.appendChild(b);
     });
   });
+  renderSuggestions(); // 갱신
+};
+
+/* [추가됨] 제보 관련 함수들 */
+window.openSuggestModal = () => { document.getElementById("suggestModal").style.display = "flex"; };
+window.closeSuggestModal = () => { document.getElementById("suggestModal").style.display = "none"; };
+
+window.submitSuggestion = () => {
+  if(!currentDefense) return alert("방어팀이 선택되지 않았습니다.");
+  const name = document.getElementById("sugName").value;
+  if(!name) return alert("이름은 필수입니다.");
+
+  const data = {
+    name: name,
+    type: document.getElementById("sugType").value,
+    ring: document.getElementById("sugRing").value,
+    armor: document.getElementById("sugArmor").value,
+    skill: document.getElementById("sugSkill").value,
+    suggester: myNick,
+    timestamp: Date.now()
+  };
+  push(ref(db, `suggestions/${currentDefense}`), data).then(() => {
+    alert("제보가 완료되었습니다! 관리자 승인 후 등록됩니다.");
+    closeSuggestModal();
+    // 입력창 초기화
+    document.getElementById("sugName").value = "";
+    document.getElementById("sugType").value = "";
+    document.getElementById("sugRing").value = "";
+    document.getElementById("sugArmor").value = "";
+    document.getElementById("sugSkill").value = "";
+  });
+};
+
+function renderSuggestions() {
+  const listDiv = document.getElementById("suggestionList");
+  onValue(ref(db, "suggestions"), snap => {
+    listDiv.innerHTML = "";
+    const allSugs = snap.val();
+    if(!allSugs) { listDiv.innerHTML = "(대기 중인 제보가 없습니다)"; return; }
+    
+    Object.entries(allSugs).forEach(([defKey, suggs]) => {
+      const defName = defenseDataCache[defKey] ? defenseDataCache[defKey].name : "알수없는 방어팀";
+      Object.entries(suggs).forEach(([sugKey, data]) => {
+        const div = document.createElement("div");
+        div.className = "suggest-item";
+        div.innerHTML = `
+          <div style="font-weight:bold; color:#fff; margin-bottom:5px;">[${defName}] 상대로 제보됨</div>
+          <div style="margin-bottom:5px;"><span style="color:var(--accent);">${data.name}</span> <small style="color:#777;">(by ${data.suggester})</small></div>
+          <div style="font-size:0.8rem; color:#aaa; margin-bottom:8px;">${data.type} / ${data.ring} / ${data.armor}</div>
+          <div style="display:flex; gap:5px;">
+            <button class="mini-btn bg-blue" onclick="approveSuggestion('${defKey}', '${sugKey}')">승인</button>
+            <button class="mini-btn bg-red" onclick="rejectSuggestion('${defKey}', '${sugKey}')">거절</button>
+          </div>
+        `;
+        listDiv.appendChild(div);
+      });
+    });
+  });
+}
+
+window.approveSuggestion = async (defKey, sugKey) => {
+  if(!confirm("이 덱을 승인하여 리스트에 추가할까요?")) return;
+  const snap = await get(ref(db, `suggestions/${defKey}/${sugKey}`));
+  if(!snap.exists()) return alert("데이터가 없습니다.");
+  const data = snap.val();
+  const newAttack = {
+    name: data.name, type: data.type, ring: data.ring, armor: data.armor, skill: data.skill,
+    win: 0, lose: 0,
+    maker: data.suggester // 제보자 저장
+  };
+  await push(ref(db, `defenseTeams/${defKey}/attackTeams`), newAttack);
+  await remove(ref(db, `suggestions/${defKey}/${sugKey}`));
+  alert("승인되었습니다.");
+};
+
+window.rejectSuggestion = async (defKey, sugKey) => {
+  if(!confirm("정말 거절하고 삭제할까요?")) return;
+  await remove(ref(db, `suggestions/${defKey}/${sugKey}`));
+  alert("삭제되었습니다.");
 };
 
 /* 상세 정보 및 전적 */
@@ -392,6 +495,9 @@ window.selectAttack = (dk, ak) => {
     const d = snap.val(); if(!d) return;
     document.getElementById("attackCard").style.display = "block";
     document.getElementById("cardName").textContent = d.name;
+    // [추가됨] 제보자 표시
+    document.getElementById("cardMaker").textContent = d.maker ? `By. ${d.maker}` : "";
+
     document.getElementById("cardWin").textContent = d.win;
     document.getElementById("cardLose").textContent = d.lose;
     
@@ -567,6 +673,7 @@ function renderRanking() {
     // 텍스트 색상: 불꽃이 붙으면 약간 더 밝게, 아니면 어둡게
     const subInfoColor = fire ? "#aaa" : "#555"; 
 
+    // [수정됨] 기존 코드의 오타 document.("div") 수정
     const div = document.createElement("div"); 
     div.className = "rank-row";
     if(adminOpen && index >= 10) div.style.background = "rgba(255,0,0,0.05)"; 
