@@ -1,17 +1,19 @@
+Ui수정버전
 <!DOCTYPE html>
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>🔥 화랑 길드전 (Credit Edition)</title>
+<title>🔥 화랑 길드전 (Final)</title>
 <style>
-  /* --- [스타일] Glassmorphism & Dark UI --- */
+  /* --- [스타일] Glassmorphism (유리 모피즘) & Dark UI --- */
   :root {
     --bg-color: #050505;
     --text-main: #f0f0f0;
     --text-sub: #a0a0a0;
     --accent: #4facfe;
     
+    /* 유리 효과 변수 */
     --glass-bg: rgba(255, 255, 255, 0.03);
     --glass-border: rgba(255, 255, 255, 0.1);
     --glass-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
@@ -22,32 +24,47 @@
     background-color: var(--bg-color);
     color: var(--text-main);
     font-family: 'Suit', sans-serif;
-    margin: 0; padding: 20px; padding-bottom: 100px;
+    margin: 0;
+    padding: 20px;
+    padding-bottom: 100px;
   }
 
   h2, h3, h4 { margin-top: 0; color: #fff; font-weight: 700; }
   
+  /* 공통 버튼 & 입력창 */
   button {
     cursor: pointer; border: none; padding: 10px 15px; border-radius: 8px;
     font-weight: bold; transition: 0.2s;
   }
   input, select, textarea {
     background: rgba(30, 30, 30, 0.8);
-    border: 1px solid #444; color: #fff;
-    padding: 12px; border-radius: 8px; width: 100%;
-    box-sizing: border-box; margin-bottom: 8px;
+    border: 1px solid #444;
+    color: #fff;
+    padding: 12px;
+    border-radius: 8px;
+    width: 100%;
+    box-sizing: border-box;
+    margin-bottom: 8px;
   }
 
-  /* 드롭다운 */
+  /* --- 드롭다운 (방어팀 선택) --- */
   .dropdown-wrapper { position: relative; margin-bottom: 25px; z-index: 100; }
+  
   .glass-box {
-    background: var(--glass-bg); border: 1px solid var(--glass-border);
-    border-radius: 12px; padding: 18px;
-    backdrop-filter: var(--glass-blur); box-shadow: var(--glass-shadow);
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: 12px;
+    padding: 18px;
+    backdrop-filter: var(--glass-blur);
+    box-shadow: var(--glass-shadow);
     display: flex; justify-content: space-between; align-items: center;
     cursor: pointer; transition: 0.3s;
   }
-  .glass-box:hover { background: rgba(255, 255, 255, 0.07); border-color: rgba(255, 255, 255, 0.3); }
+  .glass-box:hover {
+    background: rgba(255, 255, 255, 0.07);
+    border-color: rgba(255, 255, 255, 0.3);
+  }
+
   .dropdown-list {
     display: none; position: absolute; top: 100%; left: 0; width: 100%;
     background: #0f0f0f; border: 1px solid #333; border-radius: 12px;
@@ -57,7 +74,7 @@
   .dropdown-item { padding: 15px; border-bottom: 1px solid #222; cursor: pointer; }
   .dropdown-item:hover { background: #222; color: var(--accent); }
 
-  /* 공격팀 리스트 */
+  /* --- 공격팀 리스트 (그리드) --- */
   #attackList {
     display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
     gap: 12px; margin-bottom: 20px;
@@ -69,11 +86,12 @@
     display: flex; flex-direction: column; justify-content: center; align-items: center;
   }
   .attack-btn.active {
-    background: rgba(79, 172, 254, 0.1); border: 1px solid var(--accent);
+    background: rgba(79, 172, 254, 0.1);
+    border: 1px solid var(--accent);
     color: #fff; box-shadow: 0 0 15px rgba(79, 172, 254, 0.2);
   }
 
-  /* 상세 정보 카드 */
+  /* --- 상세 정보 카드 --- */
   #attackCard {
     background: rgba(20, 20, 20, 0.9); border: 1px solid #444;
     border-radius: 12px; padding: 20px; display: none;
@@ -82,17 +100,24 @@
   .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 15px 0; }
   .info-item { background: #222; padding: 10px; border-radius: 6px; font-size: 0.9rem; }
   .info-label { display: block; color: #888; font-size: 0.75rem; margin-bottom: 4px; }
+
+  /* 승패 버튼 */
   .btn-win { background: #198754; color: #fff; width: 48%; padding: 15px; }
   .btn-lose { background: #dc3545; color: #fff; width: 48%; padding: 15px; }
 
-  /* 랭킹 리스트 */
+  /* --- 랭킹 리스트 --- */
   .rank-row {
     display: flex; justify-content: space-between; align-items: center;
     padding: 12px; border-bottom: 1px solid #222; font-size: 0.95rem;
   }
-  .rank-badge { margin-right: 5px; }
+  .rank-row:last-child { border-bottom: none; }
+  
+  /* 메달 색상 */
+  .rank-gold { color: #FFD700; text-shadow: 0 0 10px rgba(255, 215, 0, 0.3); }
+  .rank-silver { color: #C0C0C0; text-shadow: 0 0 10px rgba(192, 192, 192, 0.3); }
+  .rank-bronze { color: #CD7F32; text-shadow: 0 0 10px rgba(205, 127, 50, 0.3); }
 
-  /* 관리자 패널 */
+  /* --- 관리자 패널 --- */
   #adminPanel {
     background: #151515; border: 1px solid #444;
     padding: 20px; border-radius: 12px; margin-top: 30px; display: none;
@@ -100,23 +125,7 @@
   .mini-btn { padding: 4px 8px; font-size: 0.8rem; margin-left: 2px; }
   .bg-blue { background: #0d6efd; color: #fff; }
   .bg-red { background: #dc3545; color: #fff; }
-
-  /* 제보 모달 (Modal) */
-  #suggestModal {
-    display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(0,0,0,0.8); z-index: 2000;
-    align-items: center; justify-content: center;
-  }
-  .modal-content {
-    background: #1a1a1a; padding: 20px; border-radius: 12px;
-    width: 90%; max-width: 400px; border: 1px solid #444;
-  }
-
-  /* 제보 리스트 아이템 */
-  .suggest-item {
-    background: #222; padding: 10px; margin-bottom: 8px; border-radius: 6px; border: 1px solid #333;
-  }
-
+  
   footer {
     text-align: center; margin-top: 50px; padding: 20px;
     color: #555; font-size: 0.8rem; border-top: 1px solid #111;
@@ -138,7 +147,7 @@
   <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:20px;">
     <div>
       <div id="currentNick" style="color:var(--accent); font-weight:bold; font-size:1.1rem; margin-bottom:4px;"></div>
-      <div id="myStats" style="color:#aaa; font-size:0.85rem;">내 전적 로딩중...</div>
+      <div id="myStats" style="color:#aaa; font-size:0.85rem;">내 전적 불러오는 중...</div>
     </div>
     <button onclick="toggleAdmin()" id="adminBtn" style="background:#333; color:#fff; font-size:0.8rem; padding:6px 12px;">+ 관리자</button>
   </div>
@@ -153,12 +162,6 @@
   </div>
 
   <div id="attackList"></div>
-  
-  <div id="suggestBtnArea" style="text-align:center; margin-bottom:20px; display:none;">
-    <button onclick="openSuggestModal()" style="background:transparent; border:1px dashed #555; color:#888; width:100%;">
-      + 공격덱 제보하기 (유저 참여)
-    </button>
-  </div>
 
   <div id="attackCard">
     <h2 style="border-bottom:1px solid #444; padding-bottom:10px; margin-bottom:10px;">
@@ -166,16 +169,22 @@
       <span style="float:right; font-size:0.6em; color:#888; font-weight:normal;">
         승률 <span id="cardRate" style="color:#fff; font-size:1.4em; font-weight:bold;">0</span>%
       </span>
-      <div id="cardMaker" style="font-size:0.4em; color:var(--accent); font-weight:normal; margin-top:5px;"></div>
     </h2>
+
     <div class="info-grid">
       <div class="info-item"><span class="info-label">전적</span><span id="cardWin">0</span>승 <span id="cardLose">0</span>패</div>
       <div class="info-item"><span class="info-label">타입</span><span id="cardType">-</span></div>
-      <div class="info-item"><span class="info-label">반지</span><span id="cardRing">-</span></div>
+      <div class="info-item"><span class="info-label">진형/펫</span><span id="cardRing">-</span></div>
       <div class="info-item"><span class="info-label">스킬순서</span><span id="cardSkill">-</span></div>
-      <div class="info-item" style="grid-column: span 2;"><span class="info-label">영웅/장비</span><span id="cardArmor">-</span></div>
-      <div class="info-item" style="grid-column: span 2;"><span class="info-label">최근 5경기</span><div id="recentRecord" style="font-size:1.2rem; letter-spacing:3px;">-</div></div>
+      <div class="info-item" style="grid-column: span 2;">
+        <span class="info-label">영웅/장비/특이사항</span><span id="cardArmor">-</span>
+      </div>
+      <div class="info-item" style="grid-column: span 2;">
+        <span class="info-label">최근 5경기</span>
+        <div id="recentRecord" style="font-size:1.2rem; letter-spacing:3px;">-</div>
+      </div>
     </div>
+
     <div style="display:flex; justify-content:space-between; margin-top:10px;">
       <button class="btn-win" onclick="addWin()">🏆 승리</button>
       <button class="btn-lose" onclick="addLose()">💀 패배</button>
@@ -188,17 +197,14 @@
   <div style="margin-top:40px; border-top:1px solid #333; padding-top:20px;">
     <h3 style="color:#aaa; font-size:1rem;">🏆 명예의 전당 (승리 랭킹)</h3>
     <div id="rankingList" style="background:rgba(255,255,255,0.03); border-radius:12px; border:1px solid #333;"></div>
-    <div id="moreRankMsg" style="text-align:center; color:#555; font-size:0.8rem; margin-top:10px; display:none;">* 11위 이하는 관리자에게만 표시됩니다.</div>
+    <div id="moreRankMsg" style="text-align:center; color:#555; font-size:0.8rem; margin-top:10px; display:none;">
+      * 11위 이하는 관리자에게만 표시됩니다.
+    </div>
   </div>
 
   <div id="adminPanel">
     <h3>🛠️ 데이터 관리</h3>
     
-    <div style="background:#221a1a; padding:10px; border-radius:8px; border:1px solid #633; margin-bottom:20px;">
-      <h4 style="color:#ffaaaa;">🔔 대기 중인 제보</h4>
-      <div id="suggestionList" style="color:#888; font-size:0.9rem;">(제보된 덱이 없습니다)</div>
-    </div>
-
     <div style="margin-bottom:20px;">
       <h4>방어팀 관리</h4>
       <input type="text" id="defName" placeholder="새 방어팀 이름">
@@ -207,10 +213,10 @@
     </div>
     
     <div style="margin-bottom:20px;">
-      <h4>공격팀 직접 추가</h4>
+      <h4>공격팀(덱) 관리</h4>
       <input type="text" id="atkName" placeholder="공격팀 이름">
       <input type="text" id="atkType" placeholder="타입">
-      <input type="text" id="ringRec" placeholder="반지">
+      <input type="text" id="ringRec" placeholder="진형/펫">
       <textarea id="armorRec" rows="2" placeholder="특이사항"></textarea>
       <input type="text" id="skillOrder" placeholder="스킬 순서">
       <div style="margin-top:5px;">
@@ -219,31 +225,18 @@
         <button onclick="delAttack()" style="background:#700; color:#fff;">삭제</button>
       </div>
     </div>
+
     <hr style="border-color:#444; margin:20px 0;">
-    <h4>👥 유저 승패 수정</h4>
-    <div id="adminUserList" style="max-height:300px; overflow-y:auto; background:#111; padding:10px; border-radius:8px;"></div>
+    
+    <h4>👥 유저 승패 수정 (관리자 전용)</h4>
+    <div id="adminUserList" style="max-height:300px; overflow-y:auto; background:#111; padding:10px; border-radius:8px;">
+      </div>
   </div>
 
   <footer>
     <div style="margin-bottom:5px;">Designed & Developed by <b>화랑</b></div>
     <div style="font-size:0.7rem; color:#444;">Copyright © 2024 Hwarang Guild. All rights reserved.</div>
   </footer>
-</div>
-
-<div id="suggestModal">
-  <div class="modal-content">
-    <h3>💡 공격덱 제보</h3>
-    <p style="color:#aaa; font-size:0.8rem; margin-bottom:15px;">관리자 승인 후 리스트에 등록됩니다.</p>
-    <input type="text" id="sugName" placeholder="공격팀 이름 (필수)">
-    <input type="text" id="sugType" placeholder="타입 (만능형 등)">
-    <input type="text" id="sugRing" placeholder="반지">
-    <textarea id="sugArmor" rows="2" placeholder="영웅/장비/특이사항"></textarea>
-    <input type="text" id="sugSkill" placeholder="스킬 순서">
-    <div style="display:flex; gap:10px; margin-top:10px;">
-      <button onclick="submitSuggestion()" style="flex:1; background:var(--accent); color:#000;">제보하기</button>
-      <button onclick="closeSuggestModal()" style="flex:1; background:#333; color:#fff;">취소</button>
-    </div>
-  </div>
 </div>
 
 <script type="module">
@@ -269,7 +262,6 @@ let currentDefense = "";
 let currentAttack = "";
 let adminOpen = false;
 let allLogsCache = []; 
-let defenseDataCache = {}; 
 
 window.onload = () => {
   myNick = localStorage.getItem("nickname");
@@ -305,7 +297,7 @@ window.toggleAdmin = () => {
   if(!adminOpen){
     if(!checkPW()) return;
     panel.style.display="block";
-    btn.textContent="− 닫기";
+    btn.textContent="− 관리자 닫기";
     adminOpen=true;
   }else{
     panel.style.display="none";
@@ -314,7 +306,6 @@ window.toggleAdmin = () => {
   }
   renderRanking();
   renderAdminUserList(); 
-  renderSuggestions(); 
 };
 
 window.toggleDropdown = () => {
@@ -327,20 +318,22 @@ window.addEventListener('click', (e) => {
   }
 });
 
-/* 방어팀 목록 */
+/* 방어팀 목록 (드롭다운) - 문구 수정됨 */
 onValue(ref(db,"defenseTeams"), snap => {
   const listDiv = document.getElementById("defListDropdown");
   listDiv.innerHTML = "";
-  defenseDataCache = snap.val() || {}; 
-  if(!defenseDataCache) {
+  const d = snap.val();
+  if(!d) {
     document.getElementById("defCurrentText").textContent = "데이터 없음"; return;
   }
-  Object.entries(defenseDataCache).forEach(([k, v]) => {
+  Object.entries(d).forEach(([k, v]) => {
     const tWins = Object.values(v.attackTeams||{}).reduce((a,b)=>a+(b.win||0),0);
     const tLose = Object.values(v.attackTeams||{}).reduce((a,b)=>a+(b.lose||0),0);
     const rate = (tWins+tLose) ? Math.round(tWins/(tWins+tLose)*100) : 0;
+    
     const div = document.createElement("div");
     div.className = "dropdown-item";
+    /* [수정] 방어 성공률 -> 공격 성공률 */
     div.innerHTML = `<b>${v.name}</b><small>공격 성공률 ${rate}% (${tWins}승 ${tLose}패)</small>`;
     div.onclick = () => {
       document.getElementById("defCurrentText").innerHTML = `${v.name} <span style="font-size:0.8em; color:#888;">(${rate}%)</span>`;
@@ -355,16 +348,17 @@ window.loadAttackTeams = (dk) => {
   currentDefense = dk;
   currentAttack = ""; 
   document.getElementById("attackCard").style.display = "none";
-  document.getElementById("suggestBtnArea").style.display = "block";
   const attackList = document.getElementById("attackList");
   attackList.innerHTML="";
 
   onValue(ref(db,`defenseTeams/${dk}/attackTeams`), snap => {
     attackList.innerHTML="";
     const d = snap.val(); if(!d) return;
+    
     Object.entries(d).forEach(([ak, av]) => {
       const t = av.win + av.lose;
       const r = t ? Math.round(av.win/t*100) : 0;
+      
       const b = document.createElement("button");
       b.className = "attack-btn";
       const fire = r >= 70 ? "<span style='color:red'>🔥</span> " : "";
@@ -377,97 +371,31 @@ window.loadAttackTeams = (dk) => {
       attackList.appendChild(b);
     });
   });
-  renderSuggestions(); 
 };
 
-/* 제보 관련 */
-window.openSuggestModal = () => { document.getElementById("suggestModal").style.display = "flex"; };
-window.closeSuggestModal = () => { document.getElementById("suggestModal").style.display = "none"; };
-
-window.submitSuggestion = () => {
-  if(!currentDefense) return alert("방어팀이 선택되지 않았습니다.");
-  const name = document.getElementById("sugName").value;
-  if(!name) return alert("이름은 필수입니다.");
-
-  const data = {
-    name: name,
-    type: document.getElementById("sugType").value,
-    ring: document.getElementById("sugRing").value,
-    armor: document.getElementById("sugArmor").value,
-    skill: document.getElementById("sugSkill").value,
-    suggester: myNick,
-    timestamp: Date.now()
-  };
-  push(ref(db, `suggestions/${currentDefense}`), data).then(() => {
-    alert("제보가 완료되었습니다! 관리자 승인 후 등록됩니다.");
-    closeSuggestModal();
-    document.getElementById("sugName").value = "";
-    document.getElementById("sugType").value = "";
-    document.getElementById("sugRing").value = "";
-    document.getElementById("sugArmor").value = "";
-    document.getElementById("sugSkill").value = "";
-  });
-};
-
-function renderSuggestions() {
-  const listDiv = document.getElementById("suggestionList");
-  onValue(ref(db, "suggestions"), snap => {
-    listDiv.innerHTML = "";
-    const allSugs = snap.val();
-    if(!allSugs) { listDiv.innerHTML = "(대기 중인 제보가 없습니다)"; return; }
-    Object.entries(allSugs).forEach(([defKey, suggs]) => {
-      const defName = defenseDataCache[defKey] ? defenseDataCache[defKey].name : "알수없는 방어팀";
-      Object.entries(suggs).forEach(([sugKey, data]) => {
-        const div = document.createElement("div");
-        div.className = "suggest-item";
-        div.innerHTML = `
-          <div style="font-weight:bold; color:#fff; margin-bottom:5px;">[${defName}] 상대로 제보됨</div>
-          <div style="margin-bottom:5px;"><span style="color:var(--accent);">${data.name}</span> <small style="color:#777;">(by ${data.suggester})</small></div>
-          <div style="font-size:0.8rem; color:#aaa; margin-bottom:8px;">${data.type} / ${data.ring} / ${data.armor}</div>
-          <div style="display:flex; gap:5px;">
-            <button class="mini-btn bg-blue" onclick="approveSuggestion('${defKey}', '${sugKey}')">승인</button>
-            <button class="mini-btn bg-red" onclick="rejectSuggestion('${defKey}', '${sugKey}')">거절</button>
-          </div>
-        `;
-        listDiv.appendChild(div);
-      });
-    });
-  });
+/* 상세 정보 및 전적 */
+async function loadRecentRecord(defenseKey, attackKey){
+  const snap = await get(ref(db,"logs"));
+  const recordDiv = document.getElementById("recentRecord");
+  if(!snap.exists()) { recordDiv.innerHTML = "-"; return; }
+  
+  const logs = Object.values(snap.val())
+    .filter(v => v.defense === defenseKey && v.attack === attackKey)
+    .sort((a,b)=>b.time-a.time).slice(0,5);
+  let html = "";
+  logs.forEach(v => { html += (v.result === "win" ? "<span style='color:#4caf50;'>W</span> " : "<span style='color:#f44336;'>L</span> "); });
+  recordDiv.innerHTML = html || "-";
 }
 
-window.approveSuggestion = async (defKey, sugKey) => {
-  if(!confirm("이 덱을 승인하여 리스트에 추가할까요?")) return;
-  const snap = await get(ref(db, `suggestions/${defKey}/${sugKey}`));
-  if(!snap.exists()) return alert("데이터가 없습니다.");
-  const data = snap.val();
-  const newAttack = {
-    name: data.name, type: data.type, ring: data.ring, armor: data.armor, skill: data.skill,
-    win: 0, lose: 0,
-    maker: data.suggester // [중요] 제보자 이름 영구 저장
-  };
-  await push(ref(db, `defenseTeams/${defKey}/attackTeams`), newAttack);
-  await remove(ref(db, `suggestions/${defKey}/${sugKey}`));
-  alert("승인되었습니다.");
-};
-
-window.rejectSuggestion = async (defKey, sugKey) => {
-  if(!confirm("정말 거절하고 삭제할까요?")) return;
-  await remove(ref(db, `suggestions/${defKey}/${sugKey}`));
-  alert("삭제되었습니다.");
-};
-
-/* 카드 조회 및 로직 */
 window.selectAttack = (dk, ak) => {
   currentAttack = ak;
   onValue(ref(db,`defenseTeams/${dk}/attackTeams/${ak}`), snap => {
     const d = snap.val(); if(!d) return;
     document.getElementById("attackCard").style.display = "block";
     document.getElementById("cardName").textContent = d.name;
-    // [추가] 제보자 표시
-    document.getElementById("cardMaker").textContent = d.maker ? `By. ${d.maker}` : "";
-    
     document.getElementById("cardWin").textContent = d.win;
     document.getElementById("cardLose").textContent = d.lose;
+    
     const total = d.win + d.lose;
     const rateVal = total ? Math.round(d.win / total * 100) : 0;
     document.getElementById("cardRate").textContent = rateVal;
@@ -477,7 +405,7 @@ window.selectAttack = (dk, ak) => {
     document.getElementById("cardArmor").innerHTML = (d.armor || "-").replace(/\n/g,"<br>");
     document.getElementById("cardSkill").textContent = d.skill || "-";
     loadRecentRecord(dk, ak);
-    // 관리자 수정 폼
+
     document.getElementById("atkName").value=d.name; 
     document.getElementById("atkType").value=d.type; 
     document.getElementById("ringRec").value=d.ring; 
@@ -486,21 +414,13 @@ window.selectAttack = (dk, ak) => {
   });
 };
 
-async function loadRecentRecord(defenseKey, attackKey){
-  const snap = await get(ref(db,"logs"));
-  const recordDiv = document.getElementById("recentRecord");
-  if(!snap.exists()) { recordDiv.innerHTML = "-"; return; }
-  const logs = Object.values(snap.val()).filter(v => v.defense === defenseKey && v.attack === attackKey).sort((a,b)=>b.time-a.time).slice(0,5);
-  let html = "";
-  logs.forEach(v => { html += (v.result === "win" ? "<span style='color:#4caf50;'>W</span> " : "<span style='color:#f44336;'>L</span> "); });
-  recordDiv.innerHTML = html || "-";
-}
-
 async function canInput(){
   const today = new Date().toISOString().slice(0,10);
   const snap = await get(ref(db,"logs"));
   let cnt = 0;
-  if(snap.exists()){ Object.values(snap.val()).forEach(v=>{ if(v.nick===myNick && v.date===today) cnt++; }); }
+  if(snap.exists()){
+    Object.values(snap.val()).forEach(v=>{ if(v.nick===myNick && v.date===today) cnt++; });
+  }
   return cnt < 5;
 }
 
@@ -511,7 +431,8 @@ async function writeLog(result){
   const atk = snap.val();
   set(push(ref(db,"logs")),{
     nick: myNick, result, defense: currentDefense, attack: currentAttack,
-    attackName: atk.name || "", attackType: atk.type || "", date: new Date().toISOString().slice(0,10), time: Date.now()
+    attackName: atk.name || "", attackType: atk.type || "",
+    date: new Date().toISOString().slice(0,10), time: Date.now()
   });
 }
 
@@ -523,6 +444,7 @@ window.addWin = async () => {
   update(ref(db, `defenseTeams/${currentDefense}/attackTeams/${currentAttack}`), { win: w + 1 });
   writeLog("win");
 };
+
 window.addLose = async () => {
   if(!currentDefense || !currentAttack) return alert("⚠️ 선택 필요");
   if (!await canInput()) return alert("하루 최대 5회");
@@ -531,6 +453,7 @@ window.addLose = async () => {
   update(ref(db, `defenseTeams/${currentDefense}/attackTeams/${currentAttack}`), { lose: l + 1 });
   writeLog("lose");
 };
+
 window.resetRecord = () => {
   if(!checkPW()) return;
   if(!currentAttack) return alert("공격팀 선택 필요");
@@ -557,82 +480,162 @@ window.editAttack = ()=>{
 };
 window.delAttack = ()=>{ if(checkPW() && currentAttack) remove(ref(db,`defenseTeams/${currentDefense}/attackTeams/${currentAttack}`)); };
 
-/* 랭킹 & 유저 관리 */
-onValue(ref(db,"logs"), snap => { allLogsCache = snap.val() || {}; renderRanking(); if(adminOpen) renderAdminUserList(); });
+/* --- 랭킹 및 유저 관리 로직 --- */
+onValue(ref(db,"logs"), snap => {
+  allLogsCache = snap.val() || {}; 
+  renderRanking();
+  if(adminOpen) renderAdminUserList();
+});
+
 function renderRanking() {
   const rankingList = document.getElementById("rankingList");
   const msg = document.getElementById("moreRankMsg");
   rankingList.innerHTML = "";
+
+  // 1. 로그가 없을 경우 처리
   if(!Object.keys(allLogsCache).length) {
     rankingList.innerHTML = "<div style='text-align:center; padding:10px; color:#555;'>기록 없음</div>";
-    document.getElementById("myStats").textContent = "내 전적: 기록 없음"; return;
+    document.getElementById("myStats").textContent = "내 전적: 기록 없음"; 
+    return;
   }
-  const stat = {};
-  Object.values(allLogsCache).forEach(v=>{
-    if(!stat[v.nick]) stat[v.nick] = {w:0, l:0, total:0};
-    stat[v.nick].total++;
-    if(v.result === "win") stat[v.nick].w++; else stat[v.nick].l++;
+
+  // 2. 유저별 데이터 집계
+  const userLogs = {};
+  Object.values(allLogsCache).forEach(v => {
+    if (!userLogs[v.nick]) userLogs[v.nick] = [];
+    userLogs[v.nick].push(v);
   });
-  const sorted = Object.entries(stat).sort((a,b) => b[1].w - a[1].w);
-  const myRankIndex = sorted.findIndex(([nick]) => nick === myNick);
+
+  const rankingData = Object.keys(userLogs).map(nick => {
+    const logs = userLogs[nick];
+    
+    // 최신순 정렬
+    logs.sort((a, b) => b.time - a.time);
+
+    // 전체 전적
+    const totalWin = logs.filter(l => l.result === "win").length;
+    const totalLose = logs.filter(l => l.result === "lose").length;
+    
+    // 최근 30판 전적 (slice 0,30)
+    const recentLogs = logs.slice(0, 30);
+    const recentWin = recentLogs.filter(l => l.result === "win").length;
+    const recentLose = recentLogs.filter(l => l.result === "lose").length;
+
+    return { nick, totalWin, totalLose, recentWin, recentLose };
+  });
+
+  // 3. 전체 승수 기준 랭킹 정렬
+  rankingData.sort((a, b) => b.totalWin - a.totalWin);
+
+  // 4. 내 전적 표시 업데이트
+  const myData = rankingData.find(d => d.nick === myNick);
   const myStatDiv = document.getElementById("myStats");
-  if(myRankIndex !== -1) {
-    const [nick, val] = sorted[myRankIndex];
-    const rate = val.total ? Math.round(val.w / val.total * 100) : 0;
-    myStatDiv.innerHTML = `내 전적: ${myRankIndex + 1}위 / ${val.w}승 ${val.l}패 (${rate}%)`;
-    myStatDiv.style.color = "#4facfe"; 
+  if(myData) {
+    const myRankIndex = rankingData.indexOf(myData);
+    const total = myData.totalWin + myData.totalLose;
+    const rate = total ? Math.round(myData.totalWin / total * 100) : 0;
+    myStatDiv.innerHTML = `내 전적: ${myRankIndex + 1}위 / ${myData.totalWin}승 ${myData.totalLose}패 (${rate}%)`;
+    myStatDiv.style.color = "#4facfe";
   } else {
-    myStatDiv.innerHTML = "내 전적: 아직 기록이 없습니다"; myStatDiv.style.color = "#888";
+    myStatDiv.innerHTML = "내 전적: 아직 기록이 없습니다"; 
+    myStatDiv.style.color = "#888";
   }
+
+  // 5. 리스트 렌더링
   let hiddenCount = 0;
-  sorted.forEach(([nick, val], index) => {
+  rankingData.forEach((d, index) => {
     if(!adminOpen && index >= 10) { hiddenCount++; return; }
-    let badge = ""; let nickStyle = "color:#fff; font-weight:bold;";
+
+    // 뱃지 및 스타일
+    let badge = ""; 
+    let nickStyle = "color:#fff; font-weight:bold;";
     if(index === 0) { badge = "🥇"; nickStyle = "color:#FFD700; font-weight:bold;"; }
     else if(index === 1) { badge = "🥈"; nickStyle = "color:#C0C0C0; font-weight:bold;"; }
     else if(index === 2) { badge = "🥉"; nickStyle = "color:#CD7F32; font-weight:bold;"; }
     else { badge = `<span style='width:20px; display:inline-block; text-align:center; color:#666;'>${index+1}</span>`; }
-    const total = val.w + val.l;
-    const winRate = total ? Math.round(val.w / total * 100) : 0;
-    const div = document.createElement("div"); div.className = "rank-row";
+
+    // 전체 승률 계산
+    const total = d.totalWin + d.totalLose;
+    const winRate = total ? Math.round(d.totalWin / total * 100) : 0;
+
+    // 최근 30판 승률 및 포맷팅 (+25w/5l 84%🔥)
+    const rTotal = d.recentWin + d.recentLose;
+    const rRate = rTotal ? Math.round(d.recentWin / rTotal * 100) : 0;
+    
+    // 불꽃 로직: 최근 전적이 있고 승률이 70% 이상일 때
+    const fire = (rTotal > 0 && rRate >= 70) ? "🔥" : "";
+    
+    // 텍스트 색상: 불꽃이 붙으면 약간 더 밝게, 아니면 어둡게
+    const subInfoColor = fire ? "#aaa" : "#555"; 
+
+    const div = document.createElement("div"); 
+    div.className = "rank-row";
     if(adminOpen && index >= 10) div.style.background = "rgba(255,0,0,0.05)"; 
+
     div.innerHTML = `
-      <div style="display:flex; align-items:center; gap:8px;">${badge} <span style="${nickStyle}">${nick}</span></div>
-      <span style="color:#888; font-size:0.85rem;">
-        <span style="color:${val.w>0?'#4caf50':'#666'}">${val.w}승</span> / ${val.l}패 (${winRate}%)
-      </span>
+      <div style="display:flex; align-items:center; gap:8px;">
+        ${badge} <span style="${nickStyle}">${d.nick}</span>
+      </div>
+      <div style="text-align:right;">
+        <div style="color:#ddd; font-size:0.95rem;">
+          <span style="color:${d.totalWin>0?'#4caf50':'#666'}">${d.totalWin}승</span> / ${d.totalLose}패 (${winRate}%)
+        </div>
+        <div style="color:${subInfoColor}; font-size:0.75rem; margin-top:3px; letter-spacing:-0.5px;">
+          (+${d.recentWin}w/${d.recentLose}l ${rRate}%${fire})
+        </div>
+      </div>
     `;
     rankingList.appendChild(div);
   });
+
   msg.style.display = hiddenCount > 0 ? "block" : "none";
 }
+
+
+/* 관리자: 유저 승패 수정 */
 window.adjustScore = async (nick, type, delta) => {
   if(delta === 1) {
     set(push(ref(db,"logs")),{
       nick: nick, result: type, defense: "admin", attack: "manual_adjust",
-      attackName: "관리자수정", attackType: "", date: new Date().toISOString().slice(0,10), time: Date.now()
+      attackName: "관리자수정", attackType: "",
+      date: new Date().toISOString().slice(0,10), time: Date.now()
     });
   } else {
     const snap = await get(ref(db, "logs"));
     if(!snap.exists()) return alert("기록 없음");
-    const logs = Object.entries(snap.val()).map(([k,v]) => ({...v, key:k}))
-      .filter(v => v.nick === nick && v.result === type).sort((a,b) => b.time - a.time);
-    if(logs.length === 0) return alert("기록 없음");
+    
+    const logs = Object.entries(snap.val())
+      .map(([k,v]) => ({...v, key:k}))
+      .filter(v => v.nick === nick && v.result === type)
+      .sort((a,b) => b.time - a.time);
+      
+    if(logs.length === 0) return alert("차감할 기록이 없습니다.");
     await remove(ref(db, `logs/${logs[0].key}`));
   }
 };
+
+/* 관리자용 유저 리스트 */
 function renderAdminUserList() {
-  const listDiv = document.getElementById("adminUserList"); listDiv.innerHTML = "";
+  const listDiv = document.getElementById("adminUserList");
+  listDiv.innerHTML = "";
+  
   const stat = {};
   Object.values(allLogsCache).forEach(v=>{
     if(!stat[v.nick]) stat[v.nick] = {w:0, l:0};
-    if(v.result === "win") stat[v.nick].w++; else stat[v.nick].l++;
+    if(v.result === "win") stat[v.nick].w++;
+    else stat[v.nick].l++;
   });
-  Object.keys(stat).sort().forEach(nick => {
+
+  const sorted = Object.keys(stat).sort();
+  sorted.forEach(nick => {
     const val = stat[nick];
     const div = document.createElement("div");
-    div.style.padding = "10px"; div.style.borderBottom = "1px solid #333";
-    div.style.display = "flex"; div.style.justifyContent = "space-between"; div.style.alignItems = "center";
+    div.style.padding = "10px";
+    div.style.borderBottom = "1px solid #333";
+    div.style.display = "flex";
+    div.style.justifyContent = "space-between";
+    div.style.alignItems = "center";
+    
     div.innerHTML = `
       <span style="font-weight:bold; width:80px;">${nick}</span>
       <div style="display:flex; align-items:center; gap:5px;">
