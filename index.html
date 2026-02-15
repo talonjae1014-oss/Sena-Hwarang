@@ -552,7 +552,8 @@ onValue(ref(db,"defenseTeams"), snap => {
       const rate = (tWins+tLose) ? Math.round(tWins/(tWins+tLose)*100) : 0;
       const div = document.createElement("div");
       div.className = "dropdown-item";
-      div.innerHTML = `<b>${v.name}</b> <small style="color:#AAA;">${rate}%</small>`;
+      // [수정] 방어팀 목록에 승/패 표시
+      div.innerHTML = `<b>${v.name}</b> <small style="color:#AAA;">${rate}% (${tWins}승 ${tLose}패)</small>`;
       div.onclick = () => {
         document.getElementById("defCurrentText").textContent = v.name;
         document.getElementById("defListDropdown").style.display = "none";
@@ -596,7 +597,8 @@ window.loadAttackTeams = (dk) => {
       const b = document.createElement("div");
       b.className = "item-btn";
       const fire = r >= 70 ? "<span style='color:#FF5252'>🔥</span>" : "";
-      b.innerHTML = `<div>${fire} ${av.name}</div><div style="font-size:0.8rem; color:#AAA;">${r}% (${av.win}승)</div>`;
+      // [수정] 공격팀 목록 버튼에 승/패 표시
+      b.innerHTML = `<div>${fire} ${av.name}</div><div style="font-size:0.8rem; color:#AAA;">${r}% (${av.win}승 ${av.lose}패)</div>`;
       b.onclick = () => {
         document.querySelectorAll("#attackList .item-btn").forEach(x => x.classList.remove("active"));
         b.classList.add("active");
